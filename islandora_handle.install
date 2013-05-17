@@ -1,0 +1,56 @@
+<?php
+
+/**
+ * @file
+ * Install for the islandora_handle module.
+ */
+
+/**
+ * Implements hook_install().
+ */
+function islandora_handle_install() {
+  drupal_mkdir('public://islandora_handle_xsls');
+}
+
+/**
+ * Implements hook_uninstall().
+ */
+function islandora_handle_uninstall() {
+  $upload_path = 'public://islandora_handle_xsls';
+  $removal_files = file_scan_directory($upload_path, '/(.*)/');
+
+  foreach ($removal_files as $file) {
+    @file_delete($file);
+  }
+  drupal_rmdir($upload_path);
+}
+/**
+ * Implements hook_schema().
+ */
+function islandora_handle_schema() {
+  $schema['islandora_handle_apply_handle'] = array(
+    'description' => 'Stores relations used in the Islandora Handle module',
+    'fields' => array(
+      'cmodel' => array(
+        'description' => 'The content model of the object we are hooking on.',
+        'type' => 'varchar',
+        'length' => 255,
+        'not null' => TRUE,
+      ),
+      'datastream' => array(
+        'description' => 'The datastream of the object to apply to.',
+        'type' => 'varchar',
+        'length' => 255,
+        'not null' => TRUE,
+      ),
+      'xsl_location' => array(
+        'description' => 'The filesystem location of the XSL we are to apply.',
+        'type' => 'varchar',
+        'length' => 255,
+        'not null' => TRUE,
+      ),
+    ),
+    'primary key' => array('cmodel', 'datastream'),
+  );
+  return $schema;
+}

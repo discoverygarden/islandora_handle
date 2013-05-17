@@ -1,0 +1,242 @@
+<?php
+/**
+ * @file
+ * Module used to house customizations for MIRC@SC.
+ */
+
+/**
+ * Implements hook_menu().
+ */
+function islandora_handle_menu() {
+  $items = array();
+  $items['admin/islandora/islandora-handle'] = array(
+    'title' => 'Islandora Handle',
+    'description' => 'Settings for the Islandora Handle module.',
+    'page callback' => 'drupal_get_form',
+    'page arguments' => array('islandora_handle_server_form'),
+    'access arguments' => array('administer islandora handle'),
+    'file' => 'includes/admin.inc',
+  );
+  $items['admin/islandora/islandora-handle/server'] = array(
+    'title' => 'Handle Server',
+    'description' => 'Settings for the Handle.net server we are interacting with.',
+    'page callback' => 'drupal_get_form',
+    'page arguments' => array('islandora_handle_server_form'),
+    'access arguments' => array('administer islandora handle'),
+    'type' => MENU_DEFAULT_LOCAL_TASK,
+    'file' => 'includes/admin.inc',
+    'weight' => 0,
+  );
+  $items['admin/islandora/islandora-handle/content-models'] = array(
+    'title' => 'Content Models',
+    'description' => 'Specific content model configuration for interaction with Handles.',
+    'page callback' => 'drupal_get_form',
+    'page arguments' => array('islandora_handle_cmodel_form'),
+    'access arguments' => array('administer islandora handle'),
+    'type' => MENU_LOCAL_TASK,
+    'file' => 'includes/admin.inc',
+    'weight' => 1,
+  );
+  return $items;
+}
+
+/**
+ * Implements hook_permission().
+ */
+function islandora_handle_permission() {
+  return array(
+    'administer islandora handle' => array(
+      'title' => 'Administer the Islandora Handle module',
+    ),
+  );
+}
+
+/**
+ * Implements hook_object_ingested().
+ */
+function islandora_handle_object_ingested(AbstractObject $object) {
+  $models = $object->models;
+  $handle_or = db_or();
+
+  foreach ($models as $model) {
+    $handle_or->conditional('cmodel', $model, '=');
+  }
+  $handle_results = db_select('islandora_handle_apply_handle', 'h')
+  ->fields('h', array('cmodel', 'datastream', 'xsl_location'))
+  ->condition($handle_or)
+  ->execute()
+  ->fetchAll();
+
+  if (count($handle_results) > 0) {
+    $response = islandora_handle_construct_handle($object);
+    if ($response['code'] == 201) {
+      foreach ($handle_results as $assoc) {
+        islandora_handle_append_handle($object, $assoc->datastream, $assoc->xsl_location);
+      }
+    }
+    else {
+      $error = $response['error'];
+      watchdog('islandora_handle', "Error constructing Handle for $object->id! Error of: $error", WATCHDOG_ERROR);
+    }
+  }
+}
+
+/**
+ * Implements hook_islandora_object_alter().
+ */
+function islandora_handle_islandora_object_alter(AbstractObject $object, array &$context) {
+  if ($context['action'] == 'purge') {
+    // Query cmodels and delete Handles that may be there.
+    $models = $object->models;
+    $handle_or = db_or();
+
+    foreach ($models as $model) {
+      $handle_or->conditional('cmodel', $model, '=');
+    }
+    $handle_results = db_select('islandora_handle_apply_handle', 'h')
+    ->fields('h', array('cmodel', 'datastream', 'xsl_location'))
+    ->condition($handle_or)
+    ->execute()
+    ->fetchAll();
+
+    if (count($handle_results > 0)) {
+      // Go out and attempt to delete the Handle if there is one
+      // supposed to be created.
+      $response = islandora_handle_delete_handle($object->id);
+      if ($response['code'] != 204) {
+        $error = $response['error'];
+        watchdog('islandora_handle', "Unable to delete Handle. Error: $error", WATCHDOG_ERROR);
+      }
+    }
+  }
+}
+
+/**
+ * Heavy lifting to go out and perform the request and add it to the datastream.
+ *
+ * @param AbstractObject $object
+ *   An AbstractObject representing an object within Fedora.
+ *
+ * @return object
+ *   An object describing the response of the construction.
+ */
+function islandora_handle_construct_handle(AbstractObject $object) {
+  $suffix = $object->id;
+  $url = variable_get('islandora_handle_server_url', 'http://localhost');
+  $prefix = variable_get('islandora_handle_server_prefix', '1234567');
+  $admin_user = variable_get('islandora_handle_server_admin_password', 'superSecretPassword');
+  $admin_password = variable_get('islandora_handle_server_admin_username', 'handleAdmin');
+
+  $handle_server_url = "$url/handle-server/$prefix/$suffix";
+  // We do this with language such that we don't get language specific prefixes
+  // in the URL.
+  $target = url("islandora/objects/$suffix", array(
+    'language' => (object) array('language' => FALSE),
+    'absolute' => TRUE,
+  ));
+  $query_target = http_build_query(array('target' => $target));
+  $authorization_header = 'Basic ' . base64_encode($admin_user . ':' . $admin_password);
+  $response = drupal_http_request($handle_server_url, array(
+    'headers' => array(
+      'Authorization' => $authorization_header,
+      'data' => $query_target,
+    ),
+    'method' => 'POST',
+  ));
+  return $response;
+}
+
+/**
+ * Heavy lifting to go out and perform the request and delete the Handle.
+ *
+ * @param string $suffix
+ *   The suffix of the Handle to be deleted, in our case the PID.
+ *
+ * @return object
+ *   An object describing the deletion of the construction.
+ */
+function islandora_handle_delete_handle($suffix) {
+  $url = variable_get('islandora_handle_server_url', 'http://localhost');
+  $prefix = variable_get('islandora_handle_server_prefix', '1234567');
+  $admin_user = variable_get('islandora_handle_server_admin_password', 'superSecretPassword');
+  $admin_password = variable_get('islandora_handle_server_admin_username', 'handleAdmin');
+
+  $handle_server_url = "$url/handle-server/$prefix/$suffix";
+  $authorization_header = 'Basic ' . base64_encode($admin_user . ':' . $admin_password);
+  $response = drupal_http_request($handle_server_url, array(
+    'headers' => array(
+      'Authorization' => $authorization_header,
+    ),
+    'method' => 'DELETE',
+  ));
+  return $response;
+}
+
+/**
+ * Adds our Handle value to the specified datastream.
+ *
+ * @param AbstractObject $object
+ *   An AbstractObject representing an object within Fedora.
+ * @param string $datastream
+ *   The datastream to which we are applying the Handle value to.
+ * @param string $xsl_location
+ *   The uri location of the XSL we are applying to append the Handle.
+ */
+function islandora_handle_append_handle(AbstractObject $object, $datastream, $xsl_location) {
+  $xslt = new XSLTProcessor();
+  $xsl_transform = new DOMDocument();
+  $prefix = variable_get('islandora_handle_server_prefix', '1234567');
+  $handle_value = "http://hdl.handle.net/$prefix/$object->id";
+
+  $ds_content = $object[$datastream]->content;
+
+  $xsl_transform->load($xsl_location);
+  $input = new DomDocument();
+
+  $did_load_ok = $input->loadXML($ds_content);
+  if ($did_load_ok) {
+    $xslt->importStylesheet($xsl_transform);
+    $xslt->setParameter('', 'handle_value', $handle_value);
+    $ds_output = $xslt->transformToXml($input);
+    if ($ds_output) {
+      $object[$datastream]->content = $ds_output;
+    }
+    else {
+      watchdog('islandora_handle', "Appending the Handle value for $object->id failed!", WATCHDOG_ERROR);
+    }
+  }
+  else {
+    watchdog('islandora_handle', "Unable to load content of the $datastream datastream for $object->id!", WATCHDOG_ERROR);
+  }
+
+}
+
+/**
+ * Hook that retrieves the default XSL files that ship with the module.
+ *
+ * @return array
+ *   An array containing the list of XSL/XSLT files available.
+ */
+function islandora_handle_islandora_handle_get_xsl_files() {
+  $files = file_scan_directory(drupal_get_path('module', 'islandora_handle') . '/transforms/', '/.*\.xslt?$/');
+
+  $transform_options = array();
+  foreach ($files as $file) {
+    $transform_options[$file->uri] = $file->filename;
+  }
+
+  $handle_uploaded_files = array();
+  $upload_path = 'public://islandora_handle_xsls';
+  $uploaded_files = file_scan_directory($upload_path, '/.*\.xslt?$/');
+
+  foreach ($uploaded_files as $up_file) {
+    $handle_uploaded_files[$up_file->uri] = $up_file->filename;
+  }
+
+  foreach ($handle_uploaded_files as $key => $file) {
+    if (!in_array($file, $transform_options)) {
+      $transform_options[$key] = $file;
+    }
+  }
+  return $transform_options;
+}
