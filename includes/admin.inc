@@ -22,7 +22,7 @@ function islandora_handle_server_form($form, &$form_state) {
     '#type' => 'textfield',
     '#title' => t('Handle Server Service Location'),
     '#description' => t('Location of the Handle.net server'),
-    '#default_value' => variable_get('islandora_handle_server_url', 'http://localhost'),
+    '#default_value' => variable_get('islandora_handle_server_url', 'http://localhost:8080/handle-service'),
   );
   $form['server_handle_admin_user'] = array(
     '#type' => 'textfield',
@@ -265,6 +265,7 @@ function islandora_handle_cmodel_form($form, &$form_state) {
           '#type' => 'textfield',
           '#title' => t('Content model name'),
           '#description' => t('The name of the content model to hook on.'),
+          '#autocomplete_path' => ISLANDORA_CONTENT_MODELS_AUTOCOMPLETE,
         );
       }
     }
