@@ -95,10 +95,52 @@ function islandora_handle_append_handle(AbstractObject $object, $datastream, $xs
       $object[$datastream]->content = $ds_output;
     }
     else {
-      watchdog('islandora_handle', "Appending the Handle value for $object->id failed!", WATCHDOG_ERROR);
+      watchdog('islandora_handle', "Appending the Handle value for @obj failed!", array('@obj' => $object->id), WATCHDOG_ERROR);
     }
   }
   else {
-    watchdog('islandora_handle', "Unable to load content of the $datastream datastream for $object->id!", WATCHDOG_ERROR);
+    watchdog('islandora_handle', "Unable to load content of the @ds datastream for @obj!", array('@ds' => $datastream, '@obj' => $object->id), WATCHDOG_ERROR);
+  }
+}
+
+/**
+ * Appends the Handle value to the DC Identifier field of an object.
+ *
+ * @param AbstractObject $object
+ *   An AbstractObject representing an object in Fedora.
+ */
+function islandora_handle_add_to_dc_datastream(AbstractObject $object) {
+  if (isset($object['DC'])) {
+    // Delete an existing Handle identifier if it exists and append the new one.
+    $dom = new DomDocument();
+    $dom->preserveWhiteSpace = FALSE;
+    $dom->formatOutput = TRUE;
+    $dom->loadXML($object['DC']->content);
+    $dom_xpath = new DomXPath($dom);
+    $dom_xpath->registerNamespace('oai_dc', 'http://www.openarchives.org/OAI/2.0/oai_dc/');
+    $dom_xpath->registerNamespace('dc', 'http://purl.org/dc/elements/1.1/');
+
+    $handle_replaced = FALSE;
+    $prefix = variable_get('islandora_handle_server_prefix', '1234567');
+    $handle_value = "http://hdl.handle.net/$prefix/$object->id";
+    $handle_node = $dom->createElement('dc:identifier', $handle_value);
+
+    // First check if one exists such that we can replace it.
+    $identifier_results = $dom_xpath->query('/oai_dc:dc/dc:identifier[starts-with(text(), "http://hdl.handle.net")]');
+    foreach ($identifier_results as $node) {
+      $parent = $node->parentNode;
+      $parent->insertBefore($handle_node, $node);
+      $parent->removeChild($node);
+      // Should only be one result so let's break just incase.
+      $handle_replaced = TRUE;
+      break;
+    }
+    if (!$handle_replaced) {
+      $dom->documentElement->appendChild($handle_node);
+    }
+    $object['DC']->content = $dom->saveXML();
+  }
+  else {
+    watchdog('islandora_handle', "Unable to append Handle to DC as the datastream does not exist for @obj!", array('@obj' => $object->id), WATCHDOG_ERROR);
   }
 }

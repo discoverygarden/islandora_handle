@@ -85,14 +85,18 @@ function islandora_handle_islandora_object_ingested(AbstractObject $object) {
         $delete_response = islandora_delete_handle($object->id);
         if (!in_array($response->code, array('204', '500'))) {
           $error = $response->error;
-          watchdog('islandora_handle', "Unable to delete Handle. Error: $error", WATCHDOG_ERROR);
+          watchdog('islandora_handle', "Unable to delete Handle. Error: @error", array('@error' => $error), WATCHDOG_ERROR);
         }
-        watchdog('islandora_handle', "No Handle value was appended for $object->id as the associated datastreams do not exist");
+        watchdog('islandora_handle', "No Handle value was appended for @obj as the associated datastreams do not exist", array('@obj' => $object->id), WATCHDOG_ERROR);
+      }
+      // Add the Handle value to the DC.
+      else {
+        islandora_handle_add_to_dc_datastream($object);
       }
     }
     else {
       $error = $response->error;
-      watchdog('islandora_handle', "Error constructing Handle for $object->id! Error of: $error", WATCHDOG_ERROR);
+      watchdog('islandora_handle', "Error constructing Handle for $object->id! Error of: @error", array('@error' => $error), WATCHDOG_ERROR);
     }
   }
 }
@@ -122,7 +126,7 @@ function islandora_handle_islandora_object_alter(AbstractObject $object, array &
       $response = islandora_handle_delete_handle($object->id);
       if (!in_array($response->code, array('204', '500'))) {
         $error = $response->error;
-        watchdog('islandora_handle', "Unable to delete Handle. Error: $error", WATCHDOG_ERROR);
+        watchdog('islandora_handle', "Unable to delete Handle. Error: @error", array('@error' => $error), WATCHDOG_ERROR);
       }
     }
   }
