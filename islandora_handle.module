@@ -57,14 +57,9 @@ function islandora_handle_permission() {
 function islandora_handle_islandora_object_ingested(AbstractObject $object) {
   module_load_include('inc', 'islandora_handle', 'includes/handle');
   $models = $object->models;
-  $handle_or = db_or();
-
-  foreach ($models as $model) {
-    $handle_or->condition('cmodel', $model, '=');
-  }
   $handle_results = db_select('islandora_handle_apply_handle', 'h')
   ->fields('h', array('cmodel', 'datastream', 'xsl_location'))
-  ->condition($handle_or)
+  ->condition('cmodel', $models)
   ->execute()
   ->fetchAll();
 
@@ -83,8 +78,8 @@ function islandora_handle_islandora_object_ingested(AbstractObject $object) {
       // Handle present when it's not appended anywhere...
       if ($append_count == 0) {
         $delete_response = islandora_delete_handle($object->id);
-        if (!in_array($response->code, array('204', '500'))) {
-          $error = $response->error;
+        if (!in_array($delete_response->code, array('204', '500'))) {
+          $error = $delete_response->error;
           watchdog('islandora_handle', "Unable to delete Handle. Error: @error", array('@error' => $error), WATCHDOG_ERROR);
         }
         watchdog('islandora_handle', "No Handle value was appended for @obj as the associated datastreams do not exist", array('@obj' => $object->id), WATCHDOG_ERROR);
@@ -109,14 +104,9 @@ function islandora_handle_islandora_object_alter(AbstractObject $object, array &
   if ($context['action'] == 'purge') {
     // Query cmodels and delete Handles that may be there.
     $models = $object->models;
-    $handle_or = db_or();
-
-    foreach ($models as $model) {
-      $handle_or->condition('cmodel', $model, '=');
-    }
     $handle_results = db_select('islandora_handle_apply_handle', 'h')
     ->fields('h', array('cmodel', 'datastream', 'xsl_location'))
-    ->condition($handle_or)
+    ->condition('cmodel', $models)
     ->execute()
     ->fetchAll();
 
