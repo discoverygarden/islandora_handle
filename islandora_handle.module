@@ -91,7 +91,7 @@ function islandora_handle_islandora_object_ingested(AbstractObject $object) {
     }
     else {
       $error = $response->error;
-      watchdog('islandora_handle', "Error constructing Handle for $object->id! Error of: @error", array('@error' => $error), WATCHDOG_ERROR);
+      watchdog('islandora_handle', "Error constructing Handle for @obj! Error of: @error", array('@error' => $error, '@obj' => $object->id), WATCHDOG_ERROR);
     }
   }
 }
