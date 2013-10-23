@@ -77,7 +77,7 @@ function islandora_handle_islandora_object_ingested(AbstractObject $object) {
       // are not present on the object when we go to append. No use having a
       // Handle present when it's not appended anywhere...
       if ($append_count == 0) {
-        $delete_response = islandora_delete_handle($object->id);
+        $delete_response = islandora_handle_delete_handle($object->id);
         if (!in_array($delete_response->code, array('204', '500'))) {
           $error = $delete_response->error;
           watchdog('islandora_handle', "Unable to delete Handle. Error: @error", array('@error' => $error), WATCHDOG_ERROR);
