@@ -52,13 +52,13 @@ function islandora_handle_update_handle_url($handle, $target) {
   $admin_user = variable_get('islandora_handle_server_admin_username', 'handleAdmin');
   $admin_password = variable_get('islandora_handle_server_admin_password', 'superSecretPassword');
   $authorization_header = 'Basic ' . base64_encode($admin_user . ':' . $admin_password);
-  $query_target = drupal_http_build_query(array('target' => $target));
-  $handle_url = variable_get('islandora_handle_server_url', 'http://localhost:8080/handle-service') . '/' . $handle;
+  $handle_url = url(variable_get('islandora_handle_server_url', 'http://localhost:8080/handle-service') . '/' . $handle, array(
+    'query' => array('target' => $target),
+  ));
   $response = drupal_http_request($handle_url, array(
     'headers' => array(
       'Authorization' => $authorization_header,
     ),
-    'data' => $query_target,
     'method' => 'PUT',
   ));
   return $response;
