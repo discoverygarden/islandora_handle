@@ -52,14 +52,19 @@ function islandora_handle_permission() {
 }
 
 /**
- * Implements hook_object_ingested().
+ * Implements hook_datastream_alter().
  */
-function islandora_handle_islandora_object_ingested(AbstractObject $object) {
+function islandora_handle_islandora_datastream_alter(AbstractObject $object, AbstractDatastream $datastream, array &$context) {
+  // Only set handle during ingest.
+  if ($context['action'] != 'ingest') {
+    return;
+  }
   module_load_include('inc', 'islandora_handle', 'includes/handle');
   $models = $object->models;
   $handle_results = db_select('islandora_handle_apply_handle', 'h')
   ->fields('h', array('cmodel', 'datastream', 'xsl_location'))
   ->condition('cmodel', $models)
+  ->condition('datastream', $datastream->id)
   ->execute()
   ->fetchAll();
 
