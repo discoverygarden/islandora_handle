@@ -231,7 +231,7 @@ function islandora_handle_cmodel_form($form, &$form_state) {
         'add_button' => array(
           '#type' => 'button',
           '#name' => 'cmodel_add',
-          '#value' => t('Submit'),
+          '#value' => t('Add'),
           '#ajax' => array(
             'wrapper' => 'cmodel-content',
             'callback' => 'islandora_handle_table_ajax',
@@ -343,11 +343,11 @@ function islandora_handle_cmodel_form_validate($form, &$form_state) {
       }
       if ($valid_cmodel && $valid_dsid) {
         $handle_results = db_select('islandora_handle_apply_handle', 'h')
-         ->fields('h', array('cmodel', 'datastream'))
-         ->condition('cmodel', $cmodel, '=')
-         ->condition('datastream', $form_state['values']['datastream_name'], '=')
-         ->execute()
-         ->fetchAssoc();
+          ->fields('h', array('cmodel', 'datastream'))
+          ->condition('cmodel', $cmodel, '=')
+          ->condition('datastream', $form_state['values']['datastream_name'], '=')
+          ->execute()
+          ->fetchAssoc();
         if (!empty($handle_results)) {
           form_set_error('handle', t('A Handle association already exists for the @ds datastream on the @cmodel content model!', array(
             '@cmodel' => $cmodel,
