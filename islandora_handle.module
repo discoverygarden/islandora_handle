@@ -56,7 +56,7 @@ function islandora_handle_permission() {
  */
 function islandora_handle_islandora_object_alter(AbstractObject $object, array &$context) {
   module_load_include('inc', 'islandora_handle', 'includes/handle');
-  if ($context['action'] = 'ingest') {
+  if ($context['action'] == 'ingest') {
     $models = $object->models;
     $handle_results = db_select('islandora_handle_apply_handle', 'h')
     ->fields('h', array('cmodel', 'datastream', 'xsl_location'))
