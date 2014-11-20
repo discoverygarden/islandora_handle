@@ -50,53 +50,12 @@ function islandora_handle_permission() {
     ),
   );
 }
-
 /**
  * Implements hook_object_alter().
  */
 function islandora_handle_islandora_object_alter(AbstractObject $object, array &$context) {
   module_load_include('inc', 'islandora_handle', 'includes/handle');
-  if ($context['action'] == 'ingest') {
-    $models = $object->models;
-    $handle_results = db_select('islandora_handle_apply_handle', 'h')
-    ->fields('h', array('cmodel', 'datastream', 'xsl_location'))
-    ->condition('cmodel', $models)
-    ->execute()
-    ->fetchAll();
-
-    if (count($handle_results) > 0) {
-      $response = islandora_handle_construct_handle($object);
-      if ($response->code == 201) {
-        $append_count = 0;
-        foreach ($handle_results as $assoc) {
-          if (isset($object[$assoc->datastream])) {
-            islandora_handle_append_handle($object, $assoc->datastream, $assoc->xsl_location);
-            $append_count++;
-          }
-        }
-        // Edge case that could occur if for some reason the datastream(s)
-        // are not present on the object when we go to append. No use having a
-        // Handle present when it's not appended anywhere...
-        if ($append_count == 0) {
-          $delete_response = islandora_handle_delete_handle($object->id);
-          if (!in_array($delete_response->code, array('204', '500'))) {
-            $error = $delete_response->error;
-            watchdog('islandora_handle', "Unable to delete Handle. Error: @error", array('@error' => $error), WATCHDOG_ERROR);
-          }
-          watchdog('islandora_handle', "No Handle value was appended for @obj as the associated datastreams do not exist", array('@obj' => $object->id), WATCHDOG_ERROR);
-        }
-        // Add the Handle value to the DC.
-        else {
-          islandora_handle_add_to_dc_datastream($object);
-        }
-      }
-      else {
-        $error = $response->error;
-        watchdog('islandora_handle', "Error constructing Handle for @obj! Error of: @error", array('@error' => $error, '@obj' => $object->id), WATCHDOG_ERROR);
-      }
-    }
-  }
-  elseif ($context['action'] == 'purge') {
+  if ($context['action'] == 'purge') {
     // Query cmodels and delete Handles that may be there.
     $models = $object->models;
     $handle_results = db_select('islandora_handle_apply_handle', 'h')
@@ -115,6 +74,40 @@ function islandora_handle_islandora_object_alter(AbstractObject $object, array &
       }
     }
   }
+}
+
+/**
+ * Implements hook_islandora_derivative().
+ */
+function islandora_handle_islandora_derivative(AbstractObject $object) {
+  $derivatives = array();
+  $derivatives[] = array(
+    'source_dsid' => NULL,
+    'destination_dsid' => NULL,
+    'function' => array(
+      'islandora_handle_append_handles_from_configuration',
+    ),
+    'file' => drupal_get_path('module', 'islandora_handle') . '/includes/derivatives.inc',
+  );
+  $models = $object->models;
+  $handle_results = db_select('islandora_handle_apply_handle', 'h')
+    ->fields('h', array('cmodel', 'datastream', 'xsl_location'))
+    ->condition('cmodel', $models)
+    ->execute()
+    ->fetchAll();
+  if (count($handle_results) > 0) {
+    foreach ($handle_results as $assoc) {
+      $derivatives[] = array(
+        'source_dsid' => $assoc->datastream,
+        'destination_dsid' => 'DC',
+        'function' => array(
+          'islandora_handle_add_to_dc_datastream',
+        ),
+        'file' => drupal_get_path('module', 'islandora_handle') . '/includes/derivatives.inc',
+      );
+    }
+  }
+  return $derivatives;
 }
 
 /**

@@ -97,6 +97,9 @@ function islandora_handle_delete_handle($suffix) {
  *   The datastream to which we are applying the Handle value to.
  * @param string $xsl_location
  *   The uri location of the XSL we are applying to append the Handle.
+ *
+ * @return array
+ *   An array describing the outcome of the operation.
  */
 function islandora_handle_append_handle(AbstractObject $object, $datastream, $xsl_location) {
   $xslt = new XSLTProcessor();
@@ -115,54 +118,37 @@ function islandora_handle_append_handle(AbstractObject $object, $datastream, $xs
     $ds_output = $xslt->transformToXml($input);
     if ($ds_output) {
       $object[$datastream]->content = $ds_output;
+      return array(
+        'success' => TRUE,
+        'message' => array(
+          'message' => t('Created Handle in the @ds datastream for @pid!'),
+          'message_sub' => array('@pid' => $object->id, '@ds' => $datastream),
+          'type' => 'dsm',
+        ),
+      );
     }
     else {
-      watchdog('islandora_handle', "Appending the Handle value for @obj failed!", array('@obj' => $object->id), WATCHDOG_ERROR);
+      return array(
+        'success' => FALSE,
+        'message' => array(
+          'message' => t('Appending the Handle value for @obj on the @ds datastream failed!'),
+          'message_sub' => array('@obj' => $object->id, '@ds' => $datastream),
+          'type' => 'watchdog',
+          'severity' => WATCHDOG_ERROR,
+        ),
+      );
     }
   }
   else {
-    watchdog('islandora_handle', "Unable to load content of the @ds datastream for @obj!", array('@ds' => $datastream, '@obj' => $object->id), WATCHDOG_ERROR);
-  }
-}
-
-/**
- * Appends the Handle value to the DC Identifier field of an object.
- *
- * @param AbstractObject $object
- *   An AbstractObject representing an object in Fedora.
- */
-function islandora_handle_add_to_dc_datastream(AbstractObject $object) {
-  if (isset($object['DC'])) {
-    // Delete an existing Handle identifier if it exists and append the new one.
-    $dom = new DomDocument();
-    $dom->preserveWhiteSpace = FALSE;
-    $dom->formatOutput = TRUE;
-    $dom->loadXML($object['DC']->content);
-    $dom_xpath = new DomXPath($dom);
-    $dom_xpath->registerNamespace('oai_dc', 'http://www.openarchives.org/OAI/2.0/oai_dc/');
-    $dom_xpath->registerNamespace('dc', 'http://purl.org/dc/elements/1.1/');
-
-    $handle_replaced = FALSE;
-    $handle_url = islandora_handle_construct_url($object, FALSE);
-    $handle_node = $dom->createElement('dc:identifier', $handle_url);
-
-    // First check if one exists such that we can replace it.
-    $identifier_results = $dom_xpath->query('/oai_dc:dc/dc:identifier[starts-with(text(), "http://hdl.handle.net")]');
-    foreach ($identifier_results as $node) {
-      $parent = $node->parentNode;
-      $parent->insertBefore($handle_node, $node);
-      $parent->removeChild($node);
-      // Should only be one result so let's break just incase.
-      $handle_replaced = TRUE;
-      break;
-    }
-    if (!$handle_replaced) {
-      $dom->documentElement->appendChild($handle_node);
-    }
-    $object['DC']->content = $dom->saveXML();
-  }
-  else {
-    watchdog('islandora_handle', "Unable to append Handle to DC as the datastream does not exist for @obj!", array('@obj' => $object->id), WATCHDOG_ERROR);
+    return array(
+      'success' => FALSE,
+      'message' => array(
+        'message' => t('Unable to load content of the @ds datastream for @obj!'),
+        'message_sub' => array('@obj' => $object->id, '@ds' => $datastream),
+        'type' => 'watchdog',
+        'severity' => WATCHDOG_ERROR,
+      ),
+    );
   }
 }
 
@@ -204,4 +190,34 @@ function islandora_handle_construct_suffix($object) {
   // For now we are just specifying that the suffix is the PID of the object.
   // In the future we can modify this as we see fit.
   return $object->id;
+}
+
+/**
+ * Sees if a Handle exists for a specified.
+ *
+ * @param AbstractObject $object
+ *   An AbstractObject representing an object within Fedora.
+ *
+ * @return bool
+ *   Whether the object has a Handle present on the Handle server.
+ *
+ * @note: This will have to change if and when we allow the user to specify a
+ * suffix that is not the PID. Likely done with a RELS statement.
+ */
+function islandora_handle_query_for_handle(AbstractObject $object) {
+  $admin_user = variable_get('islandora_handle_server_admin_username', 'handleAdmin');
+  $admin_password = variable_get('islandora_handle_server_admin_password', 'superSecretPassword');
+  $handle = islandora_handle_construct_url($object, TRUE);
+  $authorization_header = 'Basic ' . base64_encode($admin_user . ':' . $admin_password);
+  $response = drupal_http_request($handle, array(
+    'headers' => array(
+      'Authorization' => $authorization_header,
+    ),
+  ));
+  if ($response->code == 204) {
+    return TRUE;
+  }
+  else {
+    return FALSE;
+  }
 }
