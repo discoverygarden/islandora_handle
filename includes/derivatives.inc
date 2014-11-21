@@ -111,6 +111,7 @@ function islandora_handle_add_to_dc_datastream(AbstractObject $object, $force = 
     $dom_xpath->registerNamespace('oai_dc', 'http://www.openarchives.org/OAI/2.0/oai_dc/');
     $dom_xpath->registerNamespace('dc', 'http://purl.org/dc/elements/1.1/');
 
+    $update = FALSE;
     $handle_replaced = FALSE;
     $handle_url = islandora_handle_construct_url($object, FALSE);
     $handle_node = $dom->createElement('dc:identifier', $handle_url);
@@ -130,21 +131,27 @@ function islandora_handle_add_to_dc_datastream(AbstractObject $object, $force = 
         $handle_replaced = TRUE;
         break;
       }
+      else {
+        $update = TRUE;
+      }
     }
     if (!$handle_replaced) {
       $dom->documentElement->appendChild($handle_node);
     }
-    $object['DC']->content = $dom->saveXML();
-    return array(
-      'success' => TRUE,
-      'messages' => array(
-        array(
-          'message' => t('Updated the Handle in the Dublin Core for @pid.'),
-          'message_sub' => array('@pid' => $object->id),
-          'type' => 'dsm',
+
+    if ($update) {
+      $object['DC']->content = $dom->saveXML();
+      return array(
+        'success' => TRUE,
+        'messages' => array(
+          array(
+            'message' => t('Updated the Handle in the Dublin Core for @pid.'),
+            'message_sub' => array('@pid' => $object->id),
+            'type' => 'dsm',
+          ),
         ),
-      ),
-    );
+      );
+    }
   }
   else {
     $messages = array();
