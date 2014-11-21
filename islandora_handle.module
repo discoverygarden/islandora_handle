@@ -100,6 +100,7 @@ function islandora_handle_islandora_derivative(AbstractObject $object) {
           'islandora_handle_add_to_dc_datastream',
         ),
         'file' => drupal_get_path('module', 'islandora_handle') . '/includes/derivatives.inc',
+        'weight' => 100,
       );
     }
   }
