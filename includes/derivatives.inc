@@ -18,9 +18,9 @@
  *   An array describing the success of the operation.
  */
 function islandora_handle_append_handles_from_configuration(AbstractObject $object, $force = FALSE, $hook = array()) {
+  module_load_include('inc', 'islandora_handle', 'includes/handle');
   $handle_results = islandora_handle_retrieve_configurations_by_cmodels($object->models);
   if (count($handle_results) > 0) {
-    module_load_include('inc', 'islandora_handle', 'includes/handle');
     $handle_existence = islandora_handle_query_for_handle($object);
     if (!$handle_existence) {
       $response = islandora_handle_construct_handle($object);
