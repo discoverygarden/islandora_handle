@@ -111,7 +111,7 @@ function islandora_handle_add_to_dc_datastream(AbstractObject $object, $force = 
     $dom_xpath->registerNamespace('oai_dc', 'http://www.openarchives.org/OAI/2.0/oai_dc/');
     $dom_xpath->registerNamespace('dc', 'http://purl.org/dc/elements/1.1/');
 
-    $update = FALSE;
+    $update = TRUE;
     $handle_replaced = FALSE;
     $handle_url = islandora_handle_construct_url($object, FALSE);
     $handle_node = $dom->createElement('dc:identifier', $handle_url);
@@ -132,7 +132,7 @@ function islandora_handle_add_to_dc_datastream(AbstractObject $object, $force = 
         break;
       }
       else {
-        $update = TRUE;
+        $update = FALSE;
       }
     }
     if (!$handle_replaced) {
