@@ -80,6 +80,7 @@ function islandora_handle_islandora_object_alter(AbstractObject $object, array &
  * Implements hook_islandora_derivative().
  */
 function islandora_handle_islandora_derivative(AbstractObject $object) {
+  module_load_include('inc', 'islandora_handle', 'includes/handle');
   $derivatives = array();
   $derivatives[] = array(
     'source_dsid' => NULL,
@@ -89,12 +90,7 @@ function islandora_handle_islandora_derivative(AbstractObject $object) {
     ),
     'file' => drupal_get_path('module', 'islandora_handle') . '/includes/derivatives.inc',
   );
-  $models = $object->models;
-  $handle_results = db_select('islandora_handle_apply_handle', 'h')
-    ->fields('h', array('cmodel', 'datastream', 'xsl_location'))
-    ->condition('cmodel', $models)
-    ->execute()
-    ->fetchAll();
+  $handle_results = islandora_handle_retrieve_configurations_by_cmodels($object->models);
   if (count($handle_results) > 0) {
     foreach ($handle_results as $assoc) {
       $derivatives[] = array(

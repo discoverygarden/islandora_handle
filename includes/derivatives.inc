@@ -18,19 +18,13 @@
  *   An array describing the success of the operation.
  */
 function islandora_handle_append_handles_from_configuration(AbstractObject $object, $force = FALSE, $hook = array()) {
-  $models = $object->models;
-  $handle_results = db_select('islandora_handle_apply_handle', 'h')
-    ->fields('h', array('cmodel', 'datastream', 'xsl_location'))
-    ->condition('cmodel', $models)
-    ->execute()
-    ->fetchAll();
+  $handle_results = islandora_handle_retrieve_configurations_by_cmodels($object->models);
   if (count($handle_results) > 0) {
     module_load_include('inc', 'islandora_handle', 'includes/handle');
     $handle_existence = islandora_handle_query_for_handle($object);
     if (!$handle_existence) {
       $response = islandora_handle_construct_handle($object);
       if ($response->code == 201) {
-        module_load_include('inc', 'islandora_handle', 'includes/handle');
         $append_count = 0;
         $messages = array();
         $success = TRUE;
@@ -118,7 +112,6 @@ function islandora_handle_add_to_dc_datastream(AbstractObject $object, $force = 
     $dom_xpath->registerNamespace('dc', 'http://purl.org/dc/elements/1.1/');
 
     $handle_replaced = FALSE;
-    $update = FALSE;
     $handle_url = islandora_handle_construct_url($object, FALSE);
     $handle_node = $dom->createElement('dc:identifier', $handle_url);
 
@@ -130,7 +123,6 @@ function islandora_handle_add_to_dc_datastream(AbstractObject $object, $force = 
       if ($node->nodeValue != $handle_url) {
         // Delete an existing Handle identifier if it exists and append the new
         // one.
-        $update = TRUE;
         $parent = $node->parentNode;
         $parent->insertBefore($handle_node, $node);
         $parent->removeChild($node);
@@ -142,19 +134,17 @@ function islandora_handle_add_to_dc_datastream(AbstractObject $object, $force = 
     if (!$handle_replaced) {
       $dom->documentElement->appendChild($handle_node);
     }
-    if ($update) {
-      $object['DC']->content = $dom->saveXML();
-      return array(
-        'success' => TRUE,
-        'messages' => array(
-          array(
-            'message' => t('Updated the Handle in the Dublin Core for @pid.'),
-            'message_sub' => array('@pid' => $object->id),
-            'type' => 'dsm',
-          ),
+    $object['DC']->content = $dom->saveXML();
+    return array(
+      'success' => TRUE,
+      'messages' => array(
+        array(
+          'message' => t('Updated the Handle in the Dublin Core for @pid.'),
+          'message_sub' => array('@pid' => $object->id),
+          'type' => 'dsm',
         ),
-      );
-    }
+      ),
+    );
   }
   else {
     $messages = array();

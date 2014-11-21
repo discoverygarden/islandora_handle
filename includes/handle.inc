@@ -221,3 +221,21 @@ function islandora_handle_query_for_handle(AbstractObject $object) {
     return FALSE;
   }
 }
+
+/**
+ * Retrieve all configurations for the specified content models.
+ *
+ * @param array $models
+ *   An array of models to be queried against.
+ *
+ * @return array
+ *   An array describing the result of the database query.
+ */
+function islandora_handle_retrieve_configurations_by_cmodels($models) {
+  $handle_results = db_select('islandora_handle_apply_handle', 'h')
+    ->fields('h', array('cmodel', 'datastream', 'xsl_location'))
+    ->condition('cmodel', $models)
+    ->execute()
+    ->fetchAll();
+  return $handle_results;
+}
