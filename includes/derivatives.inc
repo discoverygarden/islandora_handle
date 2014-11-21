@@ -48,7 +48,7 @@ function islandora_handle_append_handles_from_configuration(AbstractObject $obje
         // are not present on the object when we go to append. No use having a
         // Handle present when it's not appended anywhere...
         if ($append_count == 0) {
-          $success = FALSE;no
+          $success = FALSE;
           $delete_response = islandora_handle_delete_handle($object->id);
           if (!in_array($delete_response->code, array('204', '500'))) {
             $error = $delete_response->error;
