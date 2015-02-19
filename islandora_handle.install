@@ -52,7 +52,7 @@ function islandora_handle_schema() {
     ),
     'primary key' => array('cmodel', 'datastream'),
   );
-  return $schema
+  return $schema;
 }
 
 /**
