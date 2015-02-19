@@ -236,7 +236,7 @@ function islandora_handle_construct_suffix($object) {
  * suffix that is not the PID. Likely done with a RELS statement.
  */
 function islandora_handle_query_for_handle(AbstractObject $object) {
-  if ('islandora_handle_debug_mode') {
+  if (variable_get('islandora_handle_debug_mode', FALSE)) {
     $handle = db_select('islandora_handle_debug_handles', 'h')
       ->fields('h')
       ->condition('suffix', $object->id, '=')
