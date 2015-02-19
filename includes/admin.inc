@@ -42,6 +42,12 @@ function islandora_handle_server_form($form, &$form_state) {
     '#description' => t('Handle prefix as specified from Handle.net'),
     '#default_value' => variable_get('islandora_handle_server_prefix', '1234567'),
   );
+  $form['debug_mode'] = array(
+    '#type' => 'checkbox',
+    '#title' => t('Debug Mode'),
+    '#description' => t('Enables debug mode, bypassing the need for an actual handle server.'),
+    '#default_value' => variable_get('islandora_handle_debug_mode', FALSE),
+  );
   $form['server_handle_submit'] = array(
     '#type' => 'submit',
     '#value' => t('Save configuration'),
@@ -79,6 +85,7 @@ function islandora_handle_server_form_submit($form, &$form_state) {
   variable_set('islandora_handle_server_admin_username', $form_state['values']['server_handle_admin_user']);
   variable_set('islandora_handle_server_admin_password', $form_state['values']['server_handle_admin_password']);
   variable_set('islandora_handle_server_prefix', $form_state['values']['server_handle_prefix']);
+  variable_set('islandora_handle_debug_mode', $form_state['values']['debug_mode']);
 
   drupal_set_message(t('The settings have been saved!'));
 }

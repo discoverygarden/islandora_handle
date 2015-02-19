@@ -52,5 +52,22 @@ function islandora_handle_schema() {
     ),
     'primary key' => array('cmodel', 'datastream'),
   );
+  $schema['islandora_handle_debug_handles'] = array(
+    'description' => 'Stores handles used during debug mode.',
+    'fields' => array(
+      'suffix' => array(
+        'description' => 'The suffix of the handle.',
+        'type' => 'varchar',
+        'length' => 255,
+        'not null' => TRUE,
+      ),
+      'handle' => array(
+        'description' => 'The handle for this suffix.',
+        'type' => 'varchar',
+        'length' => 255,
+      ),
+    ),
+    'primary key' => array('suffix'),
+  );
   return $schema;
 }
