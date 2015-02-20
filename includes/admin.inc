@@ -112,7 +112,7 @@ function islandora_handle_server_form_submit($form, &$form_state) {
   }
   elseif (db_table_exists('islandora_handle_debug_handles') && !variable_get('islandora_handle_debug_mode', FALSE) {
     db_drop_table('islandora_handle_debug_handles');
-    !db_table_exists('islandora_handle_debug_handles') ? drupal_set_message(t('Successfully removed the handle debug table from the database.')) : drupal_set_message(t('An error occurred while attempting to remove the handle debug table from the database.'), 'error');
+    db_table_exists('islandora_handle_debug_handles') ? drupal_set_message(t('An error occurred while attempting to remove the handle debug table from the database.'), 'error'); : drupal_set_message(t('Successfully removed the handle debug table from the database.'))
   }
 
   drupal_set_message(t('The settings have been saved!'));
