@@ -23,6 +23,19 @@ function islandora_handle_uninstall() {
     @file_delete($file);
   }
   drupal_rmdir($upload_path);
+
+  $variables = array(
+    'islandora_handle_debug_mode',
+    'islandora_handle_server_admin_password',
+    'islandora_handle_server_admin_username',
+    'islandora_handle_server_prefix',
+    'islandora_handle_server_url',
+  );
+  array_walk($variables, 'variable_del');
+
+  if (db_table_exists('islandora_handle_debug_handles')) {
+    db_drop_table('islandora_handle_debug_handles');
+  }
 }
 /**
  * Implements hook_schema().
@@ -53,22 +66,4 @@ function islandora_handle_schema() {
     'primary key' => array('cmodel', 'datastream'),
   );
   return $schema;
-}
-
-/**
- * Implements hook_uninstall()
- */
-function islandora_handle_uninstall() {
-  $variables = array(
-    'islandora_handle_debug_mode',
-    'islandora_handle_server_admin_password',
-    'islandora_handle_server_admin_username',
-    'islandora_handle_server_prefix',
-    'islandora_handle_server_url',
-  );
-  array_walk($variables, 'variable_del');
-
-  if (db_table_exists('islandora_handle_debug_handles')) {
-    db_drop_table('islandora_handle_debug_handles');
-  }
 }

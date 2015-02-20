@@ -27,6 +27,7 @@ function islandora_handle_construct_handle(AbstractObject $object) {
   ));
   $query_target = drupal_http_build_query(array('target' => $target));
   $authorization_header = 'Basic ' . base64_encode($admin_user . ':' . $admin_password);
+
   if (variable_get('islandora_handle_debug_mode', FALSE)) {
     $response = new stdClass();
     $response->code = 201;
@@ -38,15 +39,14 @@ function islandora_handle_construct_handle(AbstractObject $object) {
       ->execute();
     return $response;
   }
-  else {
-    $response = drupal_http_request($handle_service_url, array(
-      'headers' => array(
-        'Authorization' => $authorization_header,
-      ),
-      'data' => $query_target,
-      'method' => 'POST',
-    ));
-  }
+
+  $response = drupal_http_request($handle_service_url, array(
+    'headers' => array(
+      'Authorization' => $authorization_header,
+    ),
+    'data' => $query_target,
+    'method' => 'POST',
+  ));
   return $response;
 }
 
