@@ -67,4 +67,8 @@ function islandora_handle_uninstall() {
     'islandora_handle_server_url',
   );
   array_walk($variables, 'variable_del');
+
+  if (db_table_exists('islandora_handle_debug_handles')) {
+    db_drop_table('islandora_handle_debug_handles');
+  }
 }

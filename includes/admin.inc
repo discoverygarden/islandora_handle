@@ -108,9 +108,11 @@ function islandora_handle_server_form_submit($form, &$form_state) {
       'primary key' => array('suffix'),
     );
     db_create_table('islandora_handle_debug_handles', $schema);
+    db_table_exists('islandora_handle_debug_handles') ? drupal_set_message(t('Successfully created handle debug table')) : drupal_set_message(t('An error occurred while attempting to create the handle debug table in the database.'), 'error');
   }
   elseif (db_table_exists('islandora_handle_debug_handles') && !variable_get('islandora_handle_debug_mode', FALSE) {
     db_drop_table('islandora_handle_debug_handles');
+    db_table_exists('islandora_handle_debug_handles') ? drupal_set_message(t('Successfully removed handle debug table.')) : drupal_set_message(t('An error occurred while attempting to remove the handle debug table from the database.'), 'error');
   }
 
   drupal_set_message(t('The settings have been saved!'));
