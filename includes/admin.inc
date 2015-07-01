@@ -42,6 +42,13 @@ function islandora_handle_server_form($form, &$form_state) {
     '#description' => t('Handle prefix as specified from Handle.net'),
     '#default_value' => variable_get('islandora_handle_server_prefix', '1234567'),
   );
+  // islandora_handle_host initial value is empty and will default resolver to ingestion host.
+  $form['server_handle_host'] = array(
+    '#type' => 'textfield',
+    '#title' => t('Hostname ex:http://example.com/'),
+    '#description' => t('URL that should be used'),
+    '#default_value' => variable_get('islandora_handle_host', ''),
+  );
   $form['server_handle_submit'] = array(
     '#type' => 'submit',
     '#value' => t('Save configuration'),
@@ -79,7 +86,7 @@ function islandora_handle_server_form_submit($form, &$form_state) {
   variable_set('islandora_handle_server_admin_username', $form_state['values']['server_handle_admin_user']);
   variable_set('islandora_handle_server_admin_password', $form_state['values']['server_handle_admin_password']);
   variable_set('islandora_handle_server_prefix', $form_state['values']['server_handle_prefix']);
-
+  variable_set('islandora_handle_host', $form_state['values']['server_handle_host']);
   drupal_set_message(t('The settings have been saved!'));
 }
 
