@@ -42,7 +42,8 @@ function islandora_handle_server_form($form, &$form_state) {
     '#description' => t('Handle prefix as specified from Handle.net'),
     '#default_value' => variable_get('islandora_handle_server_prefix', '1234567'),
   );
-  // islandora_handle_host initial value is empty and will default resolver to ingestion host. 
+  // islandora_handle_host initial value is empty and will default resolver to
+  // ingestion host.
   $form['server_handle_host'] = array(
     '#type' => 'textfield',
     '#title' => t('Hostname ex:http://example.com/'),
