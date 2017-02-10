@@ -17,7 +17,7 @@
     <xsl:template match="dc:dc">
         <xsl:copy>
             <xsl:apply-templates/>
-            <dc:identifier xmlns:dc="http://purl.org/dc/elements/1.1/" type="hdl">
+            <identifier type="hdl">
                 <xsl:value-of select="$handle_value"/>
             </identifier>
         </xsl:copy>
