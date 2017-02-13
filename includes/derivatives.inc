@@ -114,7 +114,7 @@ function islandora_handle_add_to_dc_datastream(AbstractObject $object, $force = 
     $update = TRUE;
     $handle_replaced = FALSE;
     $handle_url = islandora_handle_construct_url($object, FALSE);
-    $handle_node = $dom->createElement('dc:identifier', $handle_url);
+    $handle_node = $dom->createElementNS('http://purl.org/dc/elements/1.1/', 'dc:identifier', $handle_url);
 
     // First check if one exists such that we can replace it.
     $identifier_results = $dom_xpath->query('/oai_dc:dc/dc:identifier[starts-with(text(), "http://hdl.handle.net")]');
