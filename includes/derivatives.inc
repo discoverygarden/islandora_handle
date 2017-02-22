@@ -26,6 +26,11 @@ function islandora_handle_append_handle_from_configuration(AbstractObject $objec
     $handle_exists = FALSE;
     $response = islandora_handle_construct_handle($object);
     if ($response->code == 201) {
+      $messages[] = array(
+        'message' => t('Created Handle for @pid!'),
+        'message_sub' => array('@pid' => $object->id),
+        'type' => 'dsm',
+      );
       $handle_exists = TRUE;
     }
     else {
