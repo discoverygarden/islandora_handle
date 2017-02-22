@@ -82,7 +82,6 @@ function islandora_handle_islandora_object_alter(AbstractObject $object, array &
 function islandora_handle_islandora_derivative(AbstractObject $object) {
   module_load_include('inc', 'islandora_handle', 'includes/handle');
   $derivatives = array();
-
   $handle_configs = islandora_handle_retrieve_configurations_by_cmodels($object->models);
   foreach ($handle_configs as $config) {
     $derivatives[] = array(

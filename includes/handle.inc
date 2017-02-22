@@ -15,9 +15,6 @@
  *   An object describing the response of the construction.
  */
 function islandora_handle_construct_handle(AbstractObject $object) {
-  $return = new stdClass();
-  $return->code = 201;
-  return $return;
   $admin_user = variable_get('islandora_handle_server_admin_username', 'handleAdmin');
   $admin_password = variable_get('islandora_handle_server_admin_password', 'superSecretPassword');
   $handle_service_url = islandora_handle_construct_url($object, TRUE);
@@ -216,7 +213,6 @@ function islandora_handle_construct_suffix($object) {
  * suffix that is not the PID. Likely done with a RELS statement.
  */
 function islandora_handle_query_for_handle(AbstractObject $object) {
-  return TRUE;
   $admin_user = variable_get('islandora_handle_server_admin_username', 'handleAdmin');
   $admin_password = variable_get('islandora_handle_server_admin_password', 'superSecretPassword');
   $handle = islandora_handle_construct_url($object, TRUE);
