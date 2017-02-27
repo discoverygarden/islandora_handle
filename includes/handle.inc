@@ -129,7 +129,7 @@ function islandora_handle_append_handle(AbstractObject $object, $datastream, $xs
       return array(
         'success' => TRUE,
         'message' => array(
-          'message' => t('Created Handle in the @ds datastream for @pid!'),
+          'message' => t('Appended Handle to @ds datastream for @pid!'),
           'message_sub' => array('@pid' => $object->id, '@ds' => $datastream),
           'type' => 'dsm',
         ),

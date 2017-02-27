@@ -17,70 +17,52 @@
  * @return array
  *   An array describing the success of the operation.
  */
-function islandora_handle_append_handles_from_configuration(AbstractObject $object, $force = FALSE, $hook = array()) {
+function islandora_handle_append_handle_from_configuration(AbstractObject $object, $force = FALSE, $hook = array()) {
   module_load_include('inc', 'islandora_handle', 'includes/handle');
-  $handle_results = islandora_handle_retrieve_configurations_by_cmodels($object->models);
-  if (count($handle_results) > 0) {
-    $handle_existence = islandora_handle_query_for_handle($object);
-    if (!$handle_existence) {
-      $response = islandora_handle_construct_handle($object);
-      if ($response->code == 201) {
-        $append_count = 0;
-        $messages = array();
-        $success = TRUE;
-        foreach ($handle_results as $assoc) {
-          if (isset($object[$assoc->datastream])) {
-            $add_outcome = islandora_handle_append_handle($object, $assoc->datastream, $assoc->xsl_location);
-            if (!$add_outcome['success']) {
-              $success = FALSE;
-            }
-            $messages[] = $add_outcome['message'];
-            $append_count++;
-          }
-        }
-        // Edge case that could occur if for some reason the datastream(s)
-        // are not present on the object when we go to append. No use having a
-        // Handle present when it's not appended anywhere...
-        if ($append_count == 0) {
-          $success = FALSE;
-          $delete_response = islandora_handle_delete_handle($object->id);
-          if (!in_array($delete_response->code, array('204', '500'))) {
-            $error = $delete_response->error;
-            $messages[] = array(
-              'message' => t('Unable to delete Handle. Error: @error'),
-              'message_sub' => array('@error' => $error),
-              'type' => 'watchdog',
-              'severity' => WATCHDOG_ERROR,
-            );
-          }
-          $messages[] = array(
-            'message' => t('No Handle value was appended for @obj as the associated datastreams do not exist'),
-            'message_sub' => array('@obj' => $object->id),
+  $success = TRUE;
+  $handle_exists = TRUE;
+  $messages = array();
+  if (!islandora_handle_query_for_handle($object)) {
+    $handle_exists = FALSE;
+    $response = islandora_handle_construct_handle($object);
+    if ($response->code == 201) {
+      $messages[] = array(
+        'message' => t('Created Handle for @pid!'),
+        'message_sub' => array('@pid' => $object->id),
+        'type' => 'dsm',
+      );
+      $handle_exists = TRUE;
+    }
+    else {
+      return array(
+        'success' => FALSE,
+        'messages' => array(
+          array(
+            'message' => t('Error constructing Handle for @obj! Error of: @error.'),
+            'message_sub' => array('@error' => $error, '@obj' => $object->id),
             'type' => 'watchdog',
             'severity' => WATCHDOG_ERROR,
-          );
-        }
-        return array(
-          'success' => $success,
-          'messages' => $messages,
-        );
-      }
-      else {
-        $error = $response->error;
-        return array(
-          'success' => FALSE,
-          'messages' => array(
-            array(
-              'message' => t('Error constructing Handle for @obj! Error of: @error.'),
-              'message_sub' => array('@error' => $error, '@obj' => $object->id),
-              'type' => 'watchdog',
-              'severity' => WATCHDOG_ERROR,
-            ),
           ),
-        );
-      }
+        ),
+      );
     }
   }
+
+  foreach (islandora_handle_retrieve_configurations_by_cmodels($object->models) as $assoc) {
+    if ($hook['destination_dsid'] == $assoc->datastream && isset($object[$assoc->datastream])) {
+      $add_outcome = islandora_handle_append_handle($object, $assoc->datastream, $assoc->xsl_location);
+      if (!$add_outcome['success']) {
+        $success = FALSE;
+      }
+      $messages[] = $add_outcome['message'];
+      break;
+    }
+  }
+
+  return array(
+    'success' => $success,
+    'messages' => $messages,
+  );
 }
 
 /**
@@ -177,4 +159,77 @@ function islandora_handle_add_to_dc_datastream(AbstractObject $object, $force = 
       'messages' => $messages,
     );
   }
+}
+
+/**
+ * Delete handle if datastreams do not exist on object.
+ *
+ * @param AbstractObject $object
+ *   An AbstractObject representing an object in Fedora.
+ * @param bool $force
+ *   Whether the derivatives are being forced or not.
+ * @param array $hook
+ *   An array describing the hook.
+ *
+ * @return array
+ *   An array describing the outcome of the derivative process.
+ */
+function islandora_handle_clean_up_handle(AbstractObject $object, $force = FALSE, $hook = array()) {
+  // Edge case that could occur if for some reason the datastream(s)
+  // were deleted after the handle was created. No use having a
+  // Handle present when it's not appended anywhere...
+  module_load_include('inc', 'islandora_handle', 'includes/handle');
+  $messages = array();
+  if (islandora_handle_query_for_handle($object)) {
+    $found = FALSE;
+    $associations = islandora_handle_retrieve_configurations_by_cmodels($object->models);
+    foreach ($associations as $assoc) {
+      if (isset($object[$assoc->datastream])) {
+        $found = TRUE;
+        break;
+      }
+    }
+
+    if ($found == FALSE) {
+      // Clean up DC.
+      $dom = new DomDocument();
+      $dom->preserveWhiteSpace = FALSE;
+      $dom->formatOutput = TRUE;
+      $dom->loadXML($object['DC']->content);
+      $dom_xpath = new DomXPath($dom);
+      $dom_xpath->registerNamespace('oai_dc', 'http://www.openarchives.org/OAI/2.0/oai_dc/');
+      $dom_xpath->registerNamespace('dc', 'http://purl.org/dc/elements/1.1/');
+
+      $update = FALSE;
+      $handle_url = islandora_handle_construct_url($object, FALSE);
+      $identifier_results = $dom_xpath->query('/oai_dc:dc/dc:identifier[text() = "' . $handle_url . '"]');
+      foreach ($identifier_results as $node) {
+        $node->parentNode->removeChild($node);
+        $update = TRUE;
+      }
+
+      if ($update) {
+        $object['DC']->content = $dom->saveXML();
+      }
+
+      $delete_response = islandora_handle_delete_handle($object->id);
+      if (!in_array($delete_response->code, array('204', '500'))) {
+        $error = $delete_response->error;
+        $messages[] = array(
+          'message' => t('Unable to delete Handle. Error: @error'),
+          'message_sub' => array('@error' => $error),
+          'type' => 'watchdog',
+          'severity' => WATCHDOG_ERROR,
+        );
+        return array(
+          'success' => FALSE,
+          'messages' => $messages,
+        );
+      }
+    }
+  }
+  return array(
+    'success' => TRUE,
+    'messages' => array(),
+  );
 }
