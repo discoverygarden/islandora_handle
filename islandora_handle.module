@@ -82,28 +82,36 @@ function islandora_handle_islandora_object_alter(AbstractObject $object, array &
 function islandora_handle_islandora_derivative(AbstractObject $object) {
   module_load_include('inc', 'islandora_handle', 'includes/handle');
   $derivatives = array();
-  $derivatives[] = array(
-    'source_dsid' => NULL,
-    'destination_dsid' => NULL,
-    'function' => array(
-      'islandora_handle_append_handles_from_configuration',
-    ),
-    'file' => drupal_get_path('module', 'islandora_handle') . '/includes/derivatives.inc',
-  );
-  $handle_results = islandora_handle_retrieve_configurations_by_cmodels($object->models);
-  if (count($handle_results) > 0) {
-    foreach ($handle_results as $assoc) {
-      $derivatives[] = array(
-        'source_dsid' => $assoc->datastream,
-        'destination_dsid' => 'DC',
-        'function' => array(
-          'islandora_handle_add_to_dc_datastream',
-        ),
-        'file' => drupal_get_path('module', 'islandora_handle') . '/includes/derivatives.inc',
-        'weight' => 100,
-      );
-    }
+  $handle_configs = islandora_handle_retrieve_configurations_by_cmodels($object->models);
+  foreach ($handle_configs as $config) {
+    $derivatives[] = array(
+      'source_dsid' => NULL,
+      'destination_dsid' => $config->datastream,
+      'function' => array(
+        'islandora_handle_append_handle_from_configuration',
+      ),
+      'file' => drupal_get_path('module', 'islandora_handle') . '/includes/derivatives.inc',
+    );
+
+    $derivatives[] = array(
+      'source_dsid' => $config->datastream,
+      'destination_dsid' => 'DC',
+      'function' => array(
+        'islandora_handle_add_to_dc_datastream',
+      ),
+      'file' => drupal_get_path('module', 'islandora_handle') . '/includes/derivatives.inc',
+      'weight' => 100,
+    );
   }
+  $derivatives[] = array(
+      'source_dsid' => NULL,
+      'destination_dsid' => NULL,
+      'function' => array(
+        'islandora_handle_clean_up_handle',
+      ),
+      'file' => drupal_get_path('module', 'islandora_handle') . '/includes/derivatives.inc',
+      'weight' => 100,
+    );
   return $derivatives;
 }
 

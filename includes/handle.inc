@@ -19,12 +19,20 @@ function islandora_handle_construct_handle(AbstractObject $object) {
   $admin_password = variable_get('islandora_handle_server_admin_password', 'superSecretPassword');
   $handle_service_url = islandora_handle_construct_url($object, TRUE);
   $suffix = islandora_handle_construct_suffix($object);
-  // We do this with language such that we don't get language specific prefixes
-  // in the URL.
-  $target = url("islandora/object/$suffix", array(
-    'language' => (object) array('language' => FALSE),
-    'absolute' => TRUE,
-  ));
+  // $hostvar will be populated if host resolver is different than ingestion
+  // service.
+  $hostvar = variable_get('islandora_handle_host', '');
+  if ($hostvar == '') {
+    // We do this with language such that we don't get language specific
+    // prefixes in the URL.
+    $target = url("islandora/object/$suffix", array(
+      'language' => (object) array('language' => FALSE),
+      'absolute' => TRUE,
+    ));
+  }
+  else {
+    $target = $hostvar . "islandora/object/$suffix";
+  }
   $query_target = drupal_http_build_query(array('target' => $target));
   $authorization_header = 'Basic ' . base64_encode($admin_user . ':' . $admin_password);
 
@@ -152,7 +160,7 @@ function islandora_handle_append_handle(AbstractObject $object, $datastream, $xs
       return array(
         'success' => TRUE,
         'message' => array(
-          'message' => t('Created Handle in the @ds datastream for @pid!'),
+          'message' => t('Appended Handle to @ds datastream for @pid!'),
           'message_sub' => array('@pid' => $object->id, '@ds' => $datastream),
           'type' => 'dsm',
         ),
