@@ -99,9 +99,8 @@ function islandora_handle_server_form_submit($form, &$form_state) {
   variable_set('islandora_handle_debug_mode', (bool) $form_state['values']['debug_mode']);
 
   // Only create the debug table if needed.
-  if (!db_table_exists('islandora_handle_debug_handles') && variable_get('islandora_handle_debug_mode', FALSE) {
-    $schema = array();
-    $schema['islandora_handle_debug_handles'] = array(
+  if (!db_table_exists('islandora_handle_debug_handles') && variable_get('islandora_handle_debug_mode', FALSE)) {
+    $table = array(
       'description' => 'Stores handles used during debug mode.',
       'fields' => array(
         'suffix' => array(
@@ -118,12 +117,17 @@ function islandora_handle_server_form_submit($form, &$form_state) {
       ),
       'primary key' => array('suffix'),
     );
-    db_create_table('islandora_handle_debug_handles', $schema);
+    db_create_table('islandora_handle_debug_handles', $table);
     db_table_exists('islandora_handle_debug_handles') ? drupal_set_message(t('Successfully created a handle debug table in the database.')) : drupal_set_message(t('An error occurred while attempting to create the handle debug table in the database.'), 'error');
   }
-  elseif (db_table_exists('islandora_handle_debug_handles') && !variable_get('islandora_handle_debug_mode', FALSE) {
+  elseif (db_table_exists('islandora_handle_debug_handles') && !variable_get('islandora_handle_debug_mode', FALSE)) {
     db_drop_table('islandora_handle_debug_handles');
-    db_table_exists('islandora_handle_debug_handles') ? drupal_set_message(t('An error occurred while attempting to remove the handle debug table from the database.'), 'error'); : drupal_set_message(t('Successfully removed the handle debug table from the database.'))
+    if (db_table_exists('islandora_handle_debug_handles')) {
+      drupal_set_message(t('An error occurred while attempting to remove the handle debug table from the database.'), 'error');
+    }
+    else {
+      drupal_set_message(t('Successfully removed the handle debug table from the database.'));
+    }
   }
 
   drupal_set_message(t('The settings have been saved!'));
