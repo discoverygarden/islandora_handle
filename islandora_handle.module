@@ -104,14 +104,14 @@ function islandora_handle_islandora_derivative(AbstractObject $object) {
     );
   }
   $derivatives[] = array(
-      'source_dsid' => NULL,
-      'destination_dsid' => NULL,
-      'function' => array(
-        'islandora_handle_clean_up_handle',
-      ),
-      'file' => drupal_get_path('module', 'islandora_handle') . '/includes/derivatives.inc',
-      'weight' => 100,
-    );
+    'source_dsid' => NULL,
+    'destination_dsid' => NULL,
+    'function' => array(
+      'islandora_handle_clean_up_handle',
+    ),
+    'file' => drupal_get_path('module', 'islandora_handle') . '/includes/derivatives.inc',
+    'weight' => 100,
+  );
   return $derivatives;
 }
 
