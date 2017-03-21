@@ -38,7 +38,6 @@ To create a new association, select `--Add a Handle association--`. It it then p
 
 NOTE: It is _not_ necessary to create an association for the `DC` datastream: When another datastream is configured, it will be added to the DC automatically.
 
-
 Similarly, it is possible to modify existing associations by selecting them in the "Select a content model" dropdown. Modifying existing associations can allow you to have the Handle URL stored in multiple datastreams. It is also possible to remove associations, after selecting them.
 
 ## Troubleshooting/Issues
