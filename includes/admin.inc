@@ -50,6 +50,12 @@ function islandora_handle_server_form($form, &$form_state) {
     '#description' => t('URL that should be used'),
     '#default_value' => variable_get('islandora_handle_host', ''),
   );
+  $form['debug_mode'] = array(
+    '#type' => 'checkbox',
+    '#title' => t('Debug Mode'),
+    '#description' => t('Enables debug mode, bypassing the need for an actual handle server.'),
+    '#default_value' => variable_get('islandora_handle_debug_mode', FALSE),
+  );
   $form['server_handle_submit'] = array(
     '#type' => 'submit',
     '#value' => t('Save configuration'),
@@ -87,7 +93,43 @@ function islandora_handle_server_form_submit($form, &$form_state) {
   variable_set('islandora_handle_server_admin_username', $form_state['values']['server_handle_admin_user']);
   variable_set('islandora_handle_server_admin_password', $form_state['values']['server_handle_admin_password']);
   variable_set('islandora_handle_server_prefix', $form_state['values']['server_handle_prefix']);
+
   variable_set('islandora_handle_host', $form_state['values']['server_handle_host']);
+
+  variable_set('islandora_handle_debug_mode', (bool) $form_state['values']['debug_mode']);
+
+  // Only create the debug table if needed.
+  if (!db_table_exists('islandora_handle_debug_handles') && variable_get('islandora_handle_debug_mode', FALSE)) {
+    $table = array(
+      'description' => 'Stores handles used during debug mode.',
+      'fields' => array(
+        'suffix' => array(
+          'description' => 'The suffix of the handle.',
+          'type' => 'varchar',
+          'length' => 255,
+          'not null' => TRUE,
+        ),
+        'handle' => array(
+          'description' => "The full handle, concatenated from the handle server's prefix and the individual handle entry's suffix.",
+          'type' => 'varchar',
+          'length' => 255,
+        ),
+      ),
+      'primary key' => array('suffix'),
+    );
+    db_create_table('islandora_handle_debug_handles', $table);
+    db_table_exists('islandora_handle_debug_handles') ? drupal_set_message(t('Successfully created a handle debug table in the database.')) : drupal_set_message(t('An error occurred while attempting to create the handle debug table in the database.'), 'error');
+  }
+  elseif (db_table_exists('islandora_handle_debug_handles') && !variable_get('islandora_handle_debug_mode', FALSE)) {
+    db_drop_table('islandora_handle_debug_handles');
+    if (db_table_exists('islandora_handle_debug_handles')) {
+      drupal_set_message(t('An error occurred while attempting to remove the handle debug table from the database.'), 'error');
+    }
+    else {
+      drupal_set_message(t('Successfully removed the handle debug table from the database.'));
+    }
+  }
+
   drupal_set_message(t('The settings have been saved!'));
 }
 

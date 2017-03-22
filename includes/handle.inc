@@ -35,6 +35,19 @@ function islandora_handle_construct_handle(AbstractObject $object) {
   }
   $query_target = drupal_http_build_query(array('target' => $target));
   $authorization_header = 'Basic ' . base64_encode($admin_user . ':' . $admin_password);
+
+  if (variable_get('islandora_handle_debug_mode', FALSE)) {
+    $response = new stdClass();
+    $response->code = 201;
+    db_insert('islandora_handle_debug_handles')
+      ->fields(array(
+        'suffix' => $suffix,
+        'handle' => $handle_service_url,
+      ))
+      ->execute();
+    return $response;
+  }
+
   $response = drupal_http_request($handle_service_url, array(
     'headers' => array(
       'Authorization' => $authorization_header,
@@ -57,6 +70,15 @@ function islandora_handle_construct_handle(AbstractObject $object) {
  *   An object describing the response of the updation.
  */
 function islandora_handle_update_handle_url($handle, $target) {
+  if (variable_get('islandora_handle_debug_mode', FALSE)) {
+    $response = new stdClass();
+    $response->code = 200;
+    db_update('islandora_handle_debug_handles')
+      ->fields(array('handle' => $target))
+      ->condition('handle', $handle, '=')
+      ->execute();
+    return $response;
+  }
   $admin_user = variable_get('islandora_handle_server_admin_username', 'handleAdmin');
   $admin_password = variable_get('islandora_handle_server_admin_password', 'superSecretPassword');
   $authorization_header = 'Basic ' . base64_encode($admin_user . ':' . $admin_password);
@@ -82,6 +104,15 @@ function islandora_handle_update_handle_url($handle, $target) {
  *   An object describing the deletion of the construction.
  */
 function islandora_handle_delete_handle($suffix) {
+  if (variable_get('islandora_handle_debug_mode', FALSE)) {
+    $response = new stdClass();
+    $response->code = 200;
+    $response->error = "There was no error";
+    db_delete('islandora_handle_debug_handles')
+      ->condition('suffix', $suffix)
+      ->execute();
+    return $response;
+  }
   $object = islandora_object_load($suffix);
   $admin_user = variable_get('islandora_handle_server_admin_username', 'handleAdmin');
   $admin_password = variable_get('islandora_handle_server_admin_password', 'superSecretPassword');
@@ -213,6 +244,14 @@ function islandora_handle_construct_suffix($object) {
  * suffix that is not the PID. Likely done with a RELS statement.
  */
 function islandora_handle_query_for_handle(AbstractObject $object) {
+  if (variable_get('islandora_handle_debug_mode', FALSE)) {
+    $handle = db_select('islandora_handle_debug_handles', 'h')
+      ->fields('h')
+      ->condition('suffix', $object->id, '=')
+      ->execute()
+      ->fetchAssoc();
+    return $handle;
+  }
   $admin_user = variable_get('islandora_handle_server_admin_username', 'handleAdmin');
   $admin_password = variable_get('islandora_handle_server_admin_password', 'superSecretPassword');
   $handle = islandora_handle_construct_url($object, TRUE);
