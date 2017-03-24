@@ -34,6 +34,7 @@ function islandora_handle_append_handle_from_configuration(AbstractObject $objec
       $handle_exists = TRUE;
     }
     else {
+      $error = $response->error;
       return array(
         'success' => FALSE,
         'messages' => array(
