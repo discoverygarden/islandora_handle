@@ -39,7 +39,7 @@ function islandora_handle_append_handle_from_configuration(AbstractObject $objec
         'messages' => array(
           array(
             'message' => t('Error constructing Handle for @obj! Error of: @error.'),
-            'message_sub' => array('@error' => $error, '@obj' => $object->id),
+            'message_sub' => array('@error' => $response->error, '@obj' => $object->id),
             'type' => 'watchdog',
             'severity' => WATCHDOG_ERROR,
           ),
