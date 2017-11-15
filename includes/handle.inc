@@ -304,7 +304,7 @@ function islandora_handle_datastream_content_equal(DOMDocument $alpha, DOMDocume
   // Make a clone of the bravo DOMDocument to preserve whatever may have been
   // transformed in the XSL from the Handle configuration.
   $new_doc = new DOMDocument($bravo->version, $bravo->encoding);
-  $new_doc->appendChild($new_doc->importNode($bravo->documentElement->cloneNode(TRUE), TRUE));
+  $new_doc->appendChild($new_doc->importNode($bravo->documentElement, TRUE));
   $docs = array(
     $alpha,
     $new_doc,
