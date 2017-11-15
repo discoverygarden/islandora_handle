@@ -154,17 +154,20 @@ function islandora_handle_append_handle(AbstractObject $object, $datastream, $xs
   if ($did_load_ok) {
     $xslt->importStylesheet($xsl_transform);
     $xslt->setParameter('', 'handle_value', $handle_url);
-    $ds_output = $xslt->transformToXml($input);
+    $ds_output = $xslt->transformToDoc($input);
     if ($ds_output) {
-      $object[$datastream]->content = $ds_output;
-      return array(
-        'success' => TRUE,
-        'message' => array(
-          'message' => t('Appended Handle to @ds datastream for @pid!'),
-          'message_sub' => array('@pid' => $object->id, '@ds' => $datastream),
-          'type' => 'dsm',
-        ),
-      );
+      // If there is nothing to change don't make a new version.
+      if (!islandora_handle_datastream_content_equal($input, $ds_output)) {
+        $object[$datastream]->content = $ds_output->saveXML();
+        return array(
+          'success' => TRUE,
+          'message' => array(
+            'message' => t('Appended Handle to @ds datastream for @pid!'),
+            'message_sub' => array('@pid' => $object->id, '@ds' => $datastream),
+            'type' => 'dsm',
+          ),
+        );
+      }
     }
     else {
       return array(
@@ -285,4 +288,32 @@ function islandora_handle_retrieve_configurations_by_cmodels($models) {
     ->execute()
     ->fetchAll();
   return $handle_results;
+}
+
+/**
+ * Helper to determine whether the Handle has already been added in metadata.
+ *
+ * @param DOMDocument $alpha
+ *   The content of the datastream currently in DOMDocument form.
+ * @param DOMDocument $bravo
+ *   THe XML output of the transform.
+ *
+ * @return bool
+ *   TRUE if it exists, FALSE otherwise,
+ */
+function islandora_handle_datastream_content_equal(DOMDocument $alpha, DOMDocument $bravo) {
+  // Make a clone of the bravo DOMDocument to preserve whatever may have been
+  // transformed in the XSL from the Handle configuration.
+  $new_doc = new DOMDocument($bravo->version, $bravo->encoding);
+  $new_doc->appendChild($new_doc->importNode($bravo->documentElement->cloneNode(TRUE), TRUE));
+  $docs = array(
+    $alpha,
+    $new_doc,
+  );
+  foreach ($docs as $doc) {
+    $doc->formatOutput = TRUE;
+    $doc->preserveWhiteSpace = FALSE;
+    $doc->normalizeDocument();
+  }
+  return $alpha->saveXML() == $new_doc->saveXML();
 }
