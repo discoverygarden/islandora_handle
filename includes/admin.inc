@@ -1,4 +1,5 @@
 <?php
+
 /**
  * @file
  * Admin form for the Islandora Handle module.
@@ -9,14 +10,13 @@
  *
  * @param array $form
  *   A Drupal form.
- *
  * @param array $form_state
  *   The Drupal form state.
  *
  * @return array
  *   The admin form.
  */
-function islandora_handle_server_form($form, &$form_state) {
+function islandora_handle_server_form(array $form, array &$form_state) {
   $form = array();
   $form['server_location'] = array(
     '#type' => 'textfield',
@@ -71,7 +71,7 @@ function islandora_handle_server_form($form, &$form_state) {
  * @param array $form_state
  *   The Drupal form state.
  */
-function islandora_handle_server_form_validate($form, &$form_state) {
+function islandora_handle_server_form_validate(array $form, array &$form_state) {
   if (valid_url($form_state['values']['server_location'], TRUE) == FALSE) {
     form_set_error('server_location', t('Must be a valid URL!'));
   }
@@ -88,7 +88,7 @@ function islandora_handle_server_form_validate($form, &$form_state) {
  * @param array $form_state
  *   The Drupal form state.
  */
-function islandora_handle_server_form_submit($form, &$form_state) {
+function islandora_handle_server_form_submit(array $form, array &$form_state) {
   variable_set('islandora_handle_server_url', $form_state['values']['server_location']);
   variable_set('islandora_handle_server_admin_username', $form_state['values']['server_handle_admin_user']);
   variable_set('islandora_handle_server_admin_password', $form_state['values']['server_handle_admin_password']);
@@ -144,7 +144,7 @@ function islandora_handle_server_form_submit($form, &$form_state) {
  * @return array
  *   The constructed content model form.
  */
-function islandora_handle_cmodel_form($form, &$form_state) {
+function islandora_handle_cmodel_form(array $form, array &$form_state) {
   $form = array();
   $handle_hide = FALSE;
   $upload_file = FALSE;
@@ -168,10 +168,10 @@ function islandora_handle_cmodel_form($form, &$form_state) {
       }
       else {
         foreach ($options as $dsid) {
-          $handle_delete = db_delete('islandora_handle_apply_handle')
-          ->condition('datastream', $dsid, '=')
-          ->condition('cmodel', $form_state['values']['cmodel_selector'], '=')
-          ->execute();
+          db_delete('islandora_handle_apply_handle')
+            ->condition('datastream', $dsid, '=')
+            ->condition('cmodel', $form_state['values']['cmodel_selector'], '=')
+            ->execute();
         }
         if ($total == count($options)) {
           $handle_hide = TRUE;
@@ -186,13 +186,13 @@ function islandora_handle_cmodel_form($form, &$form_state) {
       else {
         $cmodel = $form_state['values']['cmodel_name'];
       }
-      $handle_insert = db_insert('islandora_handle_apply_handle')
-      ->fields(array(
-        'cmodel' => $cmodel,
-        'datastream' => $form_state['values']['datastream_name'],
-        'xsl_location' => $form_state['values']['handle_xsls'],
-      ))
-      ->execute();
+      db_insert('islandora_handle_apply_handle')
+        ->fields(array(
+          'cmodel' => $cmodel,
+          'datastream' => $form_state['values']['datastream_name'],
+          'xsl_location' => $form_state['values']['handle_xsls'],
+        ))
+        ->execute();
       drupal_set_message(t('Added a Handle association for the @ds datastream on the @cm content model!', array(
         '@ds' => $form_state['values']['datastream_name'],
         '@cm' => $cmodel,
@@ -227,10 +227,10 @@ function islandora_handle_cmodel_form($form, &$form_state) {
       $table_render = TRUE;
       $cmodel_selected = $form_state['values']['cmodel_selector'];
       $handle_results = db_select('islandora_handle_apply_handle', 'h')
-      ->fields('h', array('datastream', 'xsl_location'))
-      ->condition('cmodel', $cmodel_selected, '=')
-      ->execute()
-      ->fetchAllAssoc('datastream');
+        ->fields('h', array('datastream', 'xsl_location'))
+        ->condition('cmodel', $cmodel_selected, '=')
+        ->execute()
+        ->fetchAllAssoc('datastream');
 
       $header = array('Datastream', 'XSL Location');
       $rows = array();
@@ -325,9 +325,9 @@ function islandora_handle_cmodel_form($form, &$form_state) {
     'add' => t('-- Add a Handle association --'),
   );
   $cmodel_results = db_select('islandora_handle_apply_handle', 'h')
-  ->fields('h', array('cmodel'))
-  ->execute()
-  ->fetchAllAssoc('cmodel');
+    ->fields('h', array('cmodel'))
+    ->execute()
+    ->fetchAllAssoc('cmodel');
 
   foreach ($cmodel_results as $cmodel) {
     $options[$cmodel->cmodel] = $cmodel->cmodel;
@@ -357,7 +357,7 @@ function islandora_handle_cmodel_form($form, &$form_state) {
  * @return array
  *   The portion of the form which we are rendering.
  */
-function islandora_handle_handle_ajax($form, &$form_state) {
+function islandora_handle_handle_ajax(array $form, array &$form_state) {
   return $form['cmodel_wrapper'];
 }
 
@@ -369,7 +369,7 @@ function islandora_handle_handle_ajax($form, &$form_state) {
  * @param array $form_state
  *   The Drupal form state.
  */
-function islandora_handle_cmodel_form_validate($form, &$form_state) {
+function islandora_handle_cmodel_form_validate(array $form, array &$form_state) {
   if (isset($form_state['triggering_element'])) {
     if ($form_state['triggering_element']['#name'] == 'cmodel_add') {
       $valid_cmodel = TRUE;
@@ -417,24 +417,24 @@ function islandora_handle_cmodel_form_validate($form, &$form_state) {
  * @param array $form_state
  *   The Drupal form state.
  */
-function islandora_handle_cmodel_form_submit($form, &$form_state) {
+function islandora_handle_cmodel_form_submit(array $form, array &$form_state) {
   if (!isset($form_state['values']['cmodel_name'])) {
     $cmodel = $form_state['values']['cmodel_selector'];
   }
   else {
     $cmodel = $form_state['cmodel_name'];
   }
-  $handle_insert = db_insert('islandora_handle_apply_handle')
-  ->fields(array(
-    'cmodel' => $cmodel,
-    'datastream' => $form_state['values']['datastream_name'],
-    'xsl_location' => $form_state['values']['handle_xsls'],
-  ))
-  ->execute();
+  db_insert('islandora_handle_apply_handle')
+    ->fields(array(
+      'cmodel' => $cmodel,
+      'datastream' => $form_state['values']['datastream_name'],
+      'xsl_location' => $form_state['values']['handle_xsls'],
+    ))
+    ->execute();
   drupal_set_message(t('Added a Handle association for the @ds datastream on the @cm content model!', array(
     '@ds' => $form_state['values']['datastream_name'],
     '@cm' => $cmodel,
-    )));
+  )));
 }
 
 /**
@@ -448,6 +448,6 @@ function islandora_handle_cmodel_form_submit($form, &$form_state) {
  * @return array
  *   The portion of the form we are rebuilding.
  */
-function islandora_handle_table_ajax($form, &$form_state) {
+function islandora_handle_table_ajax(array $form, array &$form_state) {
   return $form['cmodel_wrapper'];
 }

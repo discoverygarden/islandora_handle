@@ -1,4 +1,5 @@
 <?php
+
 /**
  * @file
  * Module used to house customizations for MIRC@SC.
@@ -50,6 +51,7 @@ function islandora_handle_permission() {
     ),
   );
 }
+
 /**
  * Implements hook_object_alter().
  */
@@ -59,10 +61,10 @@ function islandora_handle_islandora_object_alter(AbstractObject $object, array &
     // Query cmodels and delete Handles that may be there.
     $models = $object->models;
     $handle_results = db_select('islandora_handle_apply_handle', 'h')
-    ->fields('h', array('cmodel', 'datastream', 'xsl_location'))
-    ->condition('cmodel', $models)
-    ->execute()
-    ->fetchAll();
+      ->fields('h', array('cmodel', 'datastream', 'xsl_location'))
+      ->condition('cmodel', $models)
+      ->execute()
+      ->fetchAll();
 
     if (count($handle_results > 0)) {
       // Go out and attempt to delete the Handle if there is one

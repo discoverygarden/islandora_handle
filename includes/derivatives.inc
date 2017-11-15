@@ -1,4 +1,5 @@
 <?php
+
 /**
  * @file
  * Constructs derivatives for the Islandora Handle module.
@@ -17,13 +18,11 @@
  * @return array
  *   An array describing the success of the operation.
  */
-function islandora_handle_append_handle_from_configuration(AbstractObject $object, $force = FALSE, $hook = array()) {
+function islandora_handle_append_handle_from_configuration(AbstractObject $object, $force = FALSE, array $hook = array()) {
   module_load_include('inc', 'islandora_handle', 'includes/handle');
   $success = TRUE;
-  $handle_exists = TRUE;
   $messages = array();
   if (!islandora_handle_query_for_handle($object)) {
-    $handle_exists = FALSE;
     $response = islandora_handle_construct_handle($object);
     if ($response->code == 201) {
       $messages[] = array(
@@ -31,7 +30,6 @@ function islandora_handle_append_handle_from_configuration(AbstractObject $objec
         'message_sub' => array('@pid' => $object->id),
         'type' => 'dsm',
       );
-      $handle_exists = TRUE;
     }
     else {
       return array(
@@ -78,7 +76,7 @@ function islandora_handle_append_handle_from_configuration(AbstractObject $objec
  * @return array
  *   An array describing the outcome of the derivative process.
  */
-function islandora_handle_add_to_dc_datastream(AbstractObject $object, $force = FALSE, $hook = array()) {
+function islandora_handle_add_to_dc_datastream(AbstractObject $object, $force = FALSE, array $hook = array()) {
   module_load_include('inc', 'islandora_handle', 'includes/handle');
   $handle_existence = islandora_handle_query_for_handle($object);
   $dc_existence = isset($object['DC']);
@@ -174,7 +172,7 @@ function islandora_handle_add_to_dc_datastream(AbstractObject $object, $force = 
  * @return array
  *   An array describing the outcome of the derivative process.
  */
-function islandora_handle_clean_up_handle(AbstractObject $object, $force = FALSE, $hook = array()) {
+function islandora_handle_clean_up_handle(AbstractObject $object, $force = FALSE, array $hook = array()) {
   // Edge case that could occur if for some reason the datastream(s)
   // were deleted after the handle was created. No use having a
   // Handle present when it's not appended anywhere...

@@ -13,4 +13,7 @@
  *   file system and the value is the name of the file.
  */
 function hook_islandora_handle_get_xsl_files() {
+  return array(
+    'path/to/some/file' => 'file',
+  );
 }

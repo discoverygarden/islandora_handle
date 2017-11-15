@@ -199,14 +199,13 @@ function islandora_handle_append_handle(AbstractObject $object, $datastream, $xs
  *
  * @param AbstractObject $object
  *   An AbstractObject representing an object within Fedora.
- *
  * @param bool $service
  *   Whether this is the service URL or the Handle.net URL.
  *
  * @return string
  *   The full Handle Service URL containing the Handle.
  */
-function islandora_handle_construct_url($object, $service) {
+function islandora_handle_construct_url(AbstractObject $object, $service) {
   $suffix = islandora_handle_construct_suffix($object);
   $prefix = variable_get('islandora_handle_server_prefix', '1234567');
 
@@ -228,7 +227,7 @@ function islandora_handle_construct_url($object, $service) {
  * @return string
  *   The full Handle Service URL containing the Handle.
  */
-function islandora_handle_construct_suffix($object) {
+function islandora_handle_construct_suffix(AbstractObject $object) {
   // For now we are just specifying that the suffix is the PID of the object.
   // In the future we can modify this as we see fit.
   return $object->id;
@@ -281,7 +280,7 @@ function islandora_handle_query_for_handle(AbstractObject $object) {
  * @return array
  *   An array describing the result of the database query.
  */
-function islandora_handle_retrieve_configurations_by_cmodels($models) {
+function islandora_handle_retrieve_configurations_by_cmodels(array $models) {
   $handle_results = db_select('islandora_handle_apply_handle', 'h')
     ->fields('h', array('cmodel', 'datastream', 'xsl_location'))
     ->condition('cmodel', $models)
