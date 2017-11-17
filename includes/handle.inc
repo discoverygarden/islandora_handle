@@ -154,17 +154,20 @@ function islandora_handle_append_handle(AbstractObject $object, $datastream, $xs
   if ($did_load_ok) {
     $xslt->importStylesheet($xsl_transform);
     $xslt->setParameter('', 'handle_value', $handle_url);
-    $ds_output = $xslt->transformToXml($input);
+    $ds_output = $xslt->transformToDoc($input);
     if ($ds_output) {
-      $object[$datastream]->content = $ds_output;
-      return array(
-        'success' => TRUE,
-        'message' => array(
-          'message' => t('Appended Handle to @ds datastream for @pid!'),
-          'message_sub' => array('@pid' => $object->id, '@ds' => $datastream),
-          'type' => 'dsm',
-        ),
-      );
+      // If there is nothing to change don't make a new version.
+      if (!islandora_handle_datastream_content_equal($input, $ds_output)) {
+        $object[$datastream]->content = $ds_output->saveXML();
+        return array(
+          'success' => TRUE,
+          'message' => array(
+            'message' => t('Appended Handle to @ds datastream for @pid!'),
+            'message_sub' => array('@pid' => $object->id, '@ds' => $datastream),
+            'type' => 'dsm',
+          ),
+        );
+      }
     }
     else {
       return array(
@@ -196,14 +199,13 @@ function islandora_handle_append_handle(AbstractObject $object, $datastream, $xs
  *
  * @param AbstractObject $object
  *   An AbstractObject representing an object within Fedora.
- *
  * @param bool $service
  *   Whether this is the service URL or the Handle.net URL.
  *
  * @return string
  *   The full Handle Service URL containing the Handle.
  */
-function islandora_handle_construct_url($object, $service) {
+function islandora_handle_construct_url(AbstractObject $object, $service) {
   $suffix = islandora_handle_construct_suffix($object);
   $prefix = variable_get('islandora_handle_server_prefix', '1234567');
 
@@ -225,7 +227,7 @@ function islandora_handle_construct_url($object, $service) {
  * @return string
  *   The full Handle Service URL containing the Handle.
  */
-function islandora_handle_construct_suffix($object) {
+function islandora_handle_construct_suffix(AbstractObject $object) {
   // For now we are just specifying that the suffix is the PID of the object.
   // In the future we can modify this as we see fit.
   return $object->id;
@@ -278,11 +280,39 @@ function islandora_handle_query_for_handle(AbstractObject $object) {
  * @return array
  *   An array describing the result of the database query.
  */
-function islandora_handle_retrieve_configurations_by_cmodels($models) {
+function islandora_handle_retrieve_configurations_by_cmodels(array $models) {
   $handle_results = db_select('islandora_handle_apply_handle', 'h')
     ->fields('h', array('cmodel', 'datastream', 'xsl_location'))
     ->condition('cmodel', $models)
     ->execute()
     ->fetchAll();
   return $handle_results;
+}
+
+/**
+ * Helper to determine whether the Handle has already been added in metadata.
+ *
+ * @param DOMDocument $alpha
+ *   The content of the datastream currently in DOMDocument form.
+ * @param DOMDocument $bravo
+ *   THe XML output of the transform.
+ *
+ * @return bool
+ *   TRUE if it exists, FALSE otherwise,
+ */
+function islandora_handle_datastream_content_equal(DOMDocument $alpha, DOMDocument $bravo) {
+  // Make a clone of the bravo DOMDocument to preserve whatever may have been
+  // transformed in the XSL from the Handle configuration.
+  $new_doc = new DOMDocument($bravo->version, $bravo->encoding);
+  $new_doc->appendChild($new_doc->importNode($bravo->documentElement, TRUE));
+  $docs = array(
+    $alpha,
+    $new_doc,
+  );
+  foreach ($docs as $doc) {
+    $doc->formatOutput = TRUE;
+    $doc->preserveWhiteSpace = FALSE;
+    $doc->normalizeDocument();
+  }
+  return $alpha->saveXML() == $new_doc->saveXML();
 }

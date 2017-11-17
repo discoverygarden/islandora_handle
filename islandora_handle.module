@@ -1,4 +1,5 @@
 <?php
+
 /**
  * @file
  * Module used to house customizations for MIRC@SC.
@@ -50,6 +51,7 @@ function islandora_handle_permission() {
     ),
   );
 }
+
 /**
  * Implements hook_object_alter().
  */
@@ -59,10 +61,10 @@ function islandora_handle_islandora_object_alter(AbstractObject $object, array &
     // Query cmodels and delete Handles that may be there.
     $models = $object->models;
     $handle_results = db_select('islandora_handle_apply_handle', 'h')
-    ->fields('h', array('cmodel', 'datastream', 'xsl_location'))
-    ->condition('cmodel', $models)
-    ->execute()
-    ->fetchAll();
+      ->fields('h', array('cmodel', 'datastream', 'xsl_location'))
+      ->condition('cmodel', $models)
+      ->execute()
+      ->fetchAll();
 
     if (count($handle_results > 0)) {
       // Go out and attempt to delete the Handle if there is one
@@ -84,6 +86,7 @@ function islandora_handle_islandora_derivative(AbstractObject $object) {
   $derivatives = array();
   $handle_configs = islandora_handle_retrieve_configurations_by_cmodels($object->models);
   foreach ($handle_configs as $config) {
+    // Object ingested case.
     $derivatives[] = array(
       'source_dsid' => NULL,
       'destination_dsid' => $config->datastream,
@@ -101,6 +104,15 @@ function islandora_handle_islandora_derivative(AbstractObject $object) {
       ),
       'file' => drupal_get_path('module', 'islandora_handle') . '/includes/derivatives.inc',
       'weight' => 100,
+    );
+    // Datastream ingested/modified case.
+    $derivatives[] = array(
+      'source_dsid' => $config->datastream,
+      'destination_dsid' => $config->datastream,
+      'function' => array(
+        'islandora_handle_append_handle_from_configuration',
+      ),
+      'file' => drupal_get_path('module', 'islandora_handle') . '/includes/derivatives.inc',
     );
   }
   $derivatives[] = array(

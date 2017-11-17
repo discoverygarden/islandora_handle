@@ -37,6 +37,7 @@ function islandora_handle_uninstall() {
     db_drop_table('islandora_handle_debug_handles');
   }
 }
+
 /**
  * Implements hook_schema().
  */
