@@ -157,8 +157,9 @@ function islandora_handle_append_handle(AbstractObject $object, $datastream, $xs
     $ds_output = $xslt->transformToDoc($input);
     if ($ds_output) {
       // If there is nothing to change don't make a new version.
+      $xml_content = $ds_output->saveXML();
       if (!islandora_handle_datastream_content_equal($input, $ds_output)) {
-        $object[$datastream]->content = $ds_output->saveXML();
+        $object[$datastream]->content = $xml_content;
         return array(
           'success' => TRUE,
           'message' => array(
@@ -301,18 +302,14 @@ function islandora_handle_retrieve_configurations_by_cmodels(array $models) {
  *   TRUE if it exists, FALSE otherwise,
  */
 function islandora_handle_datastream_content_equal(DOMDocument $alpha, DOMDocument $bravo) {
-  // Make a clone of the bravo DOMDocument to preserve whatever may have been
-  // transformed in the XSL from the Handle configuration.
-  $new_doc = new DOMDocument($bravo->version, $bravo->encoding);
-  $new_doc->appendChild($new_doc->importNode($bravo->documentElement, TRUE));
   $docs = array(
     $alpha,
-    $new_doc,
+    $bravo,
   );
   foreach ($docs as $doc) {
     $doc->formatOutput = TRUE;
     $doc->preserveWhiteSpace = FALSE;
     $doc->normalizeDocument();
   }
-  return $alpha->saveXML() == $new_doc->saveXML();
+  return $alpha->saveXML() == $bravo->saveXML();
 }
