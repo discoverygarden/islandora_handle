@@ -388,6 +388,11 @@ function islandora_handle_cmodel_form_validate(array $form, array &$form_state) 
         form_set_error('datastream_name', t('Must supply a datastream name!'));
         $valid_dsid = FALSE;
       }
+      else {
+        if ($form_state['values']['datastream_name'] == 'DC') {
+          form_set_error('datastream_name', t('A Handle gets appended to the DC datastream automatically.'));
+        }
+      }
       if ($form_state['values']['handle_xsls'] == 'default') {
         form_set_error('handle_xsls', t('Must supply a valid XSL!'));
       }
