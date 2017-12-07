@@ -114,6 +114,11 @@ function islandora_handle_server_form_submit(array $form, array &$form_state) {
           'type' => 'varchar',
           'length' => 255,
         ),
+        'location' => array(
+          'description' => "The location where the debug Handle is pointing to.",
+          'type' => 'varchar',
+          'length' => 255,
+        ),
       ),
       'primary key' => array('suffix'),
     );

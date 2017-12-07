@@ -43,6 +43,7 @@ function islandora_handle_construct_handle(AbstractObject $object) {
       ->fields(array(
         'suffix' => $suffix,
         'handle' => $handle_service_url,
+        'location' => $target,
       ))
       ->execute();
     return $response;
@@ -54,6 +55,50 @@ function islandora_handle_construct_handle(AbstractObject $object) {
     ),
     'data' => $query_target,
     'method' => 'POST',
+  ));
+  return $response;
+}
+
+/**
+ * Heavy lifting to go out and get the location that a Handle points to.
+ *
+ * @param string $handle
+ *   A Handle that we are getting the location for in prefix/suffix form.
+ *
+ * @return object
+ *   An object describing the response of the get.
+ */
+function islandora_handle_get_handle_location($handle) {
+  if (variable_get('islandora_handle_debug_mode', FALSE)) {
+    // Need to munge just the suffix out for debug case.
+    $prefix = variable_get('islandora_handle_server_prefix', '1234567');
+    $suffix = str_replace("$prefix/", '', $handle);
+    $response = new stdClass();
+    $response->code = 204;
+    $location = db_select('islandora_handle_debug_handles', 'd')
+      ->fields('d', array('location'))
+      ->condition('suffix', $suffix, '=')
+      ->execute()
+      ->fetchField();
+    if ($location) {
+      $response->headers = array(
+        'location' => $location,
+      );
+    }
+    else {
+      $response->code = 404;
+    }
+    return $response;
+  }
+  $admin_user = variable_get('islandora_handle_server_admin_username', 'handleAdmin');
+  $admin_password = variable_get('islandora_handle_server_admin_password', 'superSecretPassword');
+  $authorization_header = 'Basic ' . base64_encode($admin_user . ':' . $admin_password);
+  $handle_url = url(variable_get('islandora_handle_server_url', 'http://localhost:8080/handle-service') . '/' . $handle, array());
+  $response = drupal_http_request($handle_url, array(
+    'headers' => array(
+      'Authorization' => $authorization_header,
+    ),
+    'method' => 'GET',
   ));
   return $response;
 }
@@ -73,9 +118,12 @@ function islandora_handle_update_handle_url($handle, $target) {
   if (variable_get('islandora_handle_debug_mode', FALSE)) {
     $response = new stdClass();
     $response->code = 200;
+    // Munge out of the suffix out of the Handle.
+    $prefix = variable_get('islandora_handle_server_prefix', '1234567');
+    $suffix = str_replace("$prefix/", '', $handle);
     db_update('islandora_handle_debug_handles')
-      ->fields(array('handle' => $target))
-      ->condition('handle', $handle, '=')
+      ->fields(array('location' => $target))
+      ->condition('suffix', $suffix, '=')
       ->execute();
     return $response;
   }
