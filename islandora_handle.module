@@ -41,7 +41,7 @@ function islandora_handle_menu() {
   $items['admin/reports/islandora-handle-config-list'] = array(
     'title' => 'Islandora Handle Configs',
     'description' => 'List the enabled configurations for each content model.',
-    'page callback' => 'islandora_handle_cmodel_list_config',
+    'page callback' => 'islandora_handle_config_list',
     'access arguments' => array('administer islandora handle'),
     'file' => 'includes/admin.inc',
   );

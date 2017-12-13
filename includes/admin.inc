@@ -468,7 +468,7 @@ function islandora_handle_table_ajax(array $form, array &$form_state) {
  * @return html
  *   themed list of content models and handle configs.
  */
-function islandora_handle_cmodel_list_config() {
+function islandora_handle_config_list() {
   module_load_include('inc', 'islandora', 'includes/utilities');
 
   $table = array(
