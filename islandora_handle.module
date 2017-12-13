@@ -38,14 +38,12 @@ function islandora_handle_menu() {
     'file' => 'includes/admin.inc',
     'weight' => 1,
   );
-  $items['admin/islandora/islandora-handle/list'] = array(
-    'title' => 'List Configs',
+  $items['admin/reports/islandora-handle-config-list'] = array(
+    'title' => 'Islandora Handle Configs',
     'description' => 'List the enabled configurations for each content model.',
     'page callback' => 'islandora_handle_cmodel_list_config',
     'access arguments' => array('administer islandora handle'),
-    'type' => MENU_LOCAL_TASK,
     'file' => 'includes/admin.inc',
-    'weight' => 2,
   );
   return $items;
 }
