@@ -461,3 +461,73 @@ function islandora_handle_cmodel_form_submit(array $form, array &$form_state) {
 function islandora_handle_table_ajax(array $form, array &$form_state) {
   return $form['cmodel_wrapper'];
 }
+
+/**
+ * List all content models and enabled configs for each cmodel.
+ *
+ * @return html
+ *   themed list of content models and handle configs.
+ */
+function islandora_handle_cmodel_list_config() {
+  module_load_include('inc', 'islandora', 'includes/utilities');
+
+  $table = array(
+    'attributes' => array(),
+    'colgroups' => NULL,
+    'sticky' => FALSE,
+    'caption' => '',
+    'empty' => t('No content models found.'),
+  );
+  $header = array();
+  $header[] = array('data' => t('Content Model'));
+  $header[] = array('data' => t('DSID'));
+  $header[] = array('data' => t('Transform'));
+
+  $content_models = islandora_get_content_models();
+
+  $configs = db_select('islandora_handle_apply_handle', 'h')
+    ->fields('h', array('cmodel', 'datastream', 'xsl_location'))
+    ->orderBy('datastream', 'DESC')
+    ->execute()
+    ->fetchAll();
+
+  $cmodel_configs = array();
+  foreach ($configs as $config) {
+    $cmodel_configs[$config->cmodel][] = $config;
+  }
+
+  $table['header'] = $header;
+  $rows = array();
+  foreach ($content_models as $cmodel) {
+    $row = array();
+    $row[] = array(
+      'data' => format_string('@cmodel (@pid)', array(
+        '@cmodel' => $cmodel['label'],
+        '@pid' => $cmodel['pid'],
+        )),
+      'colspan' => 3,
+    );
+    $rows[] = $row;
+    if (isset($cmodel_configs[$cmodel['pid']])) {
+      foreach ($cmodel_configs[$cmodel['pid']] as $config) {
+        $row = array();
+        $row[] = '';
+        $row[] = $config->datastream;
+        $row[] = $config->xsl_location;
+        $rows[] = $row;
+      }
+    }
+    else {
+      $row = array();
+      $row[] = '';
+      $row[] = array(
+        'data' => t('No configurations were found.'),
+        'colspan' => 2,
+      );
+      $rows[] = $row;
+    }
+  }
+  $table['rows'] = $rows;
+
+  return theme_table($table);
+}
