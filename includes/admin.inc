@@ -479,10 +479,7 @@ function islandora_handle_config_list() {
     '#caption' => t('Content Model Configuration for Islandora Handle'),
     '#empty' => t('No content models found.'),
   );
-  $header = array();
-  $header[] = array('data' => t('Content Model'));
-  $header[] = array('data' => t('DSID'));
-  $header[] = array('data' => t('Transform'));
+  $header = array(t('Content Model'), t('DSID'), t('Transform'));
 
   $content_models = islandora_get_content_models();
 
@@ -503,10 +500,14 @@ function islandora_handle_config_list() {
     $row = array();
     $row[] = "{$cmodel['label']} ({$cmodel['pid']})";
     if (isset($cmodel_configs[$cmodel['pid']])) {
+      $datastreams = array();
+      $xsls = array();
       foreach ($cmodel_configs[$cmodel['pid']] as $config) {
-        $row[] = $config->datastream;
-        $row[] = $config->xsl_location;
+        $datastreams[] = $config->datastream;
+        $xsls[] = $config->xsl_location;
       }
+      $row[] = implode('<br/>', $datastreams);
+      $row[] = implode('<br/>', $xsls);
     }
     else {
       $row[] = array(
