@@ -465,18 +465,19 @@ function islandora_handle_table_ajax(array $form, array &$form_state) {
 /**
  * List all content models and enabled configs for each cmodel.
  *
+ * This report is a usability stopgap. It would be better to update the config
+ * to use the standard table pattern. This can be removed when that happens.
+ *
  * @return html
  *   themed list of content models and handle configs.
  */
 function islandora_handle_config_list() {
   module_load_include('inc', 'islandora', 'includes/utilities');
-
   $table = array(
-    'attributes' => array(),
-    'colgroups' => NULL,
-    'sticky' => FALSE,
-    'caption' => '',
-    'empty' => t('No content models found.'),
+    '#theme' => 'table',
+    '#sticky' => FALSE,
+    '#caption' => t('Content Model Configuration for Islandora Handle'),
+    '#empty' => t('No content models found.'),
   );
   $header = array();
   $header[] = array('data' => t('Content Model'));
@@ -496,38 +497,26 @@ function islandora_handle_config_list() {
     $cmodel_configs[$config->cmodel][] = $config;
   }
 
-  $table['header'] = $header;
+  $table['#header'] = $header;
   $rows = array();
   foreach ($content_models as $cmodel) {
     $row = array();
-    $row[] = array(
-      'data' => format_string('@cmodel (@pid)', array(
-        '@cmodel' => $cmodel['label'],
-        '@pid' => $cmodel['pid'],
-        )),
-      'colspan' => 3,
-    );
-    $rows[] = $row;
+    $row[] = "{$cmodel['label']} ({$cmodel['pid']})";
     if (isset($cmodel_configs[$cmodel['pid']])) {
       foreach ($cmodel_configs[$cmodel['pid']] as $config) {
-        $row = array();
-        $row[] = '';
         $row[] = $config->datastream;
         $row[] = $config->xsl_location;
-        $rows[] = $row;
       }
     }
     else {
-      $row = array();
-      $row[] = '';
       $row[] = array(
         'data' => t('No configurations were found.'),
         'colspan' => 2,
       );
-      $rows[] = $row;
     }
+    $rows[] = $row;
   }
-  $table['rows'] = $rows;
+  $table['#rows'] = $rows;
 
-  return theme_table($table);
+  return $table;
 }
