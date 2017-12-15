@@ -461,3 +461,63 @@ function islandora_handle_cmodel_form_submit(array $form, array &$form_state) {
 function islandora_handle_table_ajax(array $form, array &$form_state) {
   return $form['cmodel_wrapper'];
 }
+
+/**
+ * List all content models and enabled configs for each cmodel.
+ *
+ * This report is a usability stopgap. It would be better to update the config
+ * to use the standard table pattern. This can be removed when that happens.
+ *
+ * @return html
+ *   themed list of content models and handle configs.
+ */
+function islandora_handle_config_list() {
+  module_load_include('inc', 'islandora', 'includes/utilities');
+  $table = array(
+    '#theme' => 'table',
+    '#sticky' => FALSE,
+    '#caption' => t('Content Model Configuration for Islandora Handle'),
+    '#empty' => t('No content models found.'),
+  );
+  $header = array(t('Content Model'), t('DSID'), t('Transform'));
+
+  $content_models = islandora_get_content_models();
+
+  $configs = db_select('islandora_handle_apply_handle', 'h')
+    ->fields('h', array('cmodel', 'datastream', 'xsl_location'))
+    ->orderBy('datastream', 'DESC')
+    ->execute()
+    ->fetchAll();
+
+  $cmodel_configs = array();
+  foreach ($configs as $config) {
+    $cmodel_configs[$config->cmodel][] = $config;
+  }
+
+  $table['#header'] = $header;
+  $rows = array();
+  foreach ($content_models as $cmodel) {
+    $row = array();
+    $row[] = "{$cmodel['label']} ({$cmodel['pid']})";
+    if (isset($cmodel_configs[$cmodel['pid']])) {
+      $datastreams = array();
+      $xsls = array();
+      foreach ($cmodel_configs[$cmodel['pid']] as $config) {
+        $datastreams[] = $config->datastream;
+        $xsls[] = $config->xsl_location;
+      }
+      $row[] = implode('<br/>', $datastreams);
+      $row[] = implode('<br/>', $xsls);
+    }
+    else {
+      $row[] = array(
+        'data' => t('No configurations were found.'),
+        'colspan' => 2,
+      );
+    }
+    $rows[] = $row;
+  }
+  $table['#rows'] = $rows;
+
+  return $table;
+}
