@@ -68,3 +68,12 @@ function islandora_handle_schema() {
   );
   return $schema;
 }
+
+/**
+ * Remove existing DC handle configs as they are automatically appended.
+ */
+function islandora_handle_update_7001(&$sandbox) {
+  db_delete('islandora_handle_apply_handle')
+    ->condition('datastream', 'DC')
+    ->execute();
+}
