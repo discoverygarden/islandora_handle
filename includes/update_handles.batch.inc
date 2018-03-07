@@ -39,8 +39,8 @@ function islandora_handle_update_handles_batch_definition($pidlist, $chunk_size)
  *
  * @param array $params
  *   An associative array containing:
- *   - 'pidlist': path to a file full of newline-separated PIDs to process
- *   - 'chunk_size': The number of items to process at once
+ *   - 'pidlist': path to a file full of newline-separated PIDs to process.
+ *   - 'chunk_size': The number of items to process at once.
  * @param array|DrushBatchContext $context
  *   Batch context.
  */
@@ -50,9 +50,8 @@ function islandora_handle_update_handles_batch_operation(array $params, array &$
   if (empty($sandbox)) {
     $sandbox['file_handle'] = fopen($params['pidlist'], 'rb');
     if (!$sandbox['file_handle']) {
-      throw new InvalidArgumentException(t('Failed to load the PID list at @pidlist: @e', array(
+      throw new InvalidArgumentException(t('Failed to load the PID list at @pidlist', array(
         '@pidlist' => $params['pidlist'],
-        '@e' => $e->getMessage(),
       )));
     }
     module_load_include('inc', 'islandora_handle', 'includes/handle');
@@ -69,11 +68,11 @@ function islandora_handle_update_handles_batch_operation(array $params, array &$
       $sandbox['finished'] = 1;
       return;
     }
-    $sandbox['current']++;
     $pid = trim(fgets($sandbox['file_handle']));
     if (empty($pid)) {
       continue;
     }
+    $sandbox['current']++;
     $object = islandora_object_load($pid);
     if (!$object) {
       watchdog('islandora_handle_update_handles',
@@ -82,13 +81,21 @@ function islandora_handle_update_handles_batch_operation(array $params, array &$
         WATCHDOG_ERROR);
     }
     else {
-      $response = islandora_handle_construct_handle($object);
+      $suffix = islandora_handle_construct_suffix($object);
+      $target = islandora_handle_construct_target_url($suffix);
+      $handle = variable_get('islandora_handle_server_prefix', '1234567') . "/$suffix";
+      $response = islandora_handle_update_handle_url($handle, $target);
       if ($response->code == 200) {
-        $message = t('Updated handle for @pid', array('@pid' => $pid));
+        $message = t('@pid: Updated handle @handle to point to @target', array(
+          '@pid' => $pid,
+          '@handle' => $handle,
+          '@target' => $target,
+        ));
       }
       else {
-        $message = t('Failed to update handle for @pid; error code @code', array(
+        $message = t('@pid: Failed to update handle @handle; error code @code', array(
           '@pid' => $pid,
+          '@handle' => $handle,
           '@code' => $response->code,
         ));
       }
