@@ -86,6 +86,8 @@ function islandora_handle_update_handles_batch_operation(array $params, array &$
       $handle = variable_get('islandora_handle_server_prefix', '1234567') . "/$suffix";
       $response = islandora_handle_update_handle_url($handle, $target);
       if ($response->code == 200) {
+        // Add the new handle to metadata.
+        module_invoke('islandora_handle', 'islandora_derivative', $object);
         $message = t('@pid: Updated handle @handle to point to @target', array(
           '@pid' => $pid,
           '@handle' => $handle,
