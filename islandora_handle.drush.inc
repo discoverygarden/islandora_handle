@@ -12,7 +12,7 @@ function islandora_handle_drush_command() {
   return array(
     'islandora_handle_update_handles' => array(
       'aliases' => array('ih-uh'),
-      'description' => dt('Updates handles for a given list of PIDs for which a handle already exists in the handle service.'),
+      'description' => dt('Updates handles for a given list of PIDs for which a handle already exists in the handle service. This includes updating the handle definition on the handle server, and re-running derivatives for any local metadata configured to contain the handle definition.'),
       'bootstrap' => DRUSH_BOOTSTRAP_DRUPAL_LOGIN,
       'options' => array(
         'pidlist' => array(
