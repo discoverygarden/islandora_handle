@@ -366,8 +366,8 @@ function islandora_handle_retrieve_configurations_by_cmodels(array $models) {
  */
 function islandora_handle_datastream_content_equal(DOMDocument $alpha, DOMDocument $bravo) {
   // XXX: DOM in PHP cannot format and remove whitespace within an existing
-  // loaded DOM. The DOM::normalizeDocument method should do this but it does
-  // not appear to function as expected.
+  // loaded DOM. The DOMDocument::normalizeDocument method should do this but it
+  // does not appear to function as expected.
   $clone_alpha = new DOMDocument();
   $clone_bravo = new DOMDocument();
   $docs = array(
