@@ -365,14 +365,22 @@ function islandora_handle_retrieve_configurations_by_cmodels(array $models) {
  *   TRUE if it exists, FALSE otherwise,
  */
 function islandora_handle_datastream_content_equal(DOMDocument $alpha, DOMDocument $bravo) {
+  // XXX: DOM in PHP cannot format and remove whitespace within an existing
+  // loaded DOM. The DOMDocument::normalizeDocument method should do this but it
+  // does not appear to function as expected.
+  $clone_alpha = new DOMDocument();
+  $clone_bravo = new DOMDocument();
   $docs = array(
-    $alpha,
-    $bravo,
+    $clone_alpha,
+    $clone_bravo,
   );
   foreach ($docs as $doc) {
     $doc->formatOutput = TRUE;
     $doc->preserveWhiteSpace = FALSE;
-    $doc->normalizeDocument();
   }
-  return $alpha->saveXML() == $bravo->saveXML();
+  // XXX: Some attributes like encoding are stripped away in the inline control
+  // group, ignore the XML declarations to ensure accuracy.
+  $clone_alpha->loadXML($alpha->saveXML($alpha->documentElement));
+  $clone_bravo->loadXML($bravo->saveXML($bravo->documentElement));
+  return $clone_alpha->saveXML() == $clone_bravo->saveXML();
 }
