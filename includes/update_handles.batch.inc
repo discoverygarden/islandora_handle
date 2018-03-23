@@ -44,7 +44,7 @@ function islandora_handle_update_handles_batch_definition($pidlist, $chunk_size)
  * @param array|DrushBatchContext $context
  *   Batch context.
  */
-function islandora_handle_update_handles_batch_operation(array $params, array &$context) {
+function islandora_handle_update_handles_batch_operation(array $params, &$context) {
   // Populate the sandbox.
   $sandbox = &$context['sandbox'];
   if (empty($sandbox)) {
