@@ -44,7 +44,7 @@ function islandora_handle_update_handles_batch_definition($pidlist, $chunk_size)
  * @param array|DrushBatchContext $context
  *   Batch context.
  */
-function islandora_handle_update_handles_batch_operation(array $params, array &$context) {
+function islandora_handle_update_handles_batch_operation(array $params, &$context) {
   // Populate the sandbox.
   $sandbox = &$context['sandbox'];
   if (empty($sandbox)) {
@@ -65,7 +65,7 @@ function islandora_handle_update_handles_batch_operation(array $params, array &$
       drush_log(t('@lines lines processed', array(
         '@lines' => $sandbox['current'],
       )));
-      $sandbox['finished'] = 1;
+      $context['finished'] = 1;
       return;
     }
     $pid = trim(fgets($sandbox['file_handle']));
@@ -86,6 +86,14 @@ function islandora_handle_update_handles_batch_operation(array $params, array &$
       $handle = variable_get('islandora_handle_server_prefix', '1234567') . "/$suffix";
       $response = islandora_handle_update_handle_url($handle, $target);
       if ($response->code == 200) {
+        // Re-run derivative generation for configured DSID sources.
+        $configs = islandora_handle_retrieve_configurations_by_cmodels($object->models);
+        foreach ($configs as $config) {
+          islandora_do_derivatives($object, array(
+            'force' => TRUE,
+            'source_dsid' => $config->dsid,
+          ));
+        }
         $message = t('@pid: Updated handle @handle to point to @target', array(
           '@pid' => $pid,
           '@handle' => $handle,
@@ -102,5 +110,5 @@ function islandora_handle_update_handles_batch_operation(array $params, array &$
       drush_log($message);
     }
   }
-  $sandbox['finished'] = 0;
+  $context['finished'] = 0;
 }
