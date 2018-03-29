@@ -55,6 +55,7 @@ function islandora_handle_update_handles_batch_operation(array $params, &$contex
       )));
     }
     module_load_include('inc', 'islandora_handle', 'includes/handle');
+    module_load_include('inc', 'islandora', 'includes/derivatives');
     $sandbox['current'] = 0;
   }
 
