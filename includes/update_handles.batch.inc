@@ -45,6 +45,8 @@ function islandora_handle_update_handles_batch_definition($pidlist, $chunk_size)
  *   Batch context.
  */
 function islandora_handle_update_handles_batch_operation(array $params, &$context) {
+  module_load_include('inc', 'islandora_handle', 'includes/handle');
+  module_load_include('inc', 'islandora', 'includes/derivatives');
   // Populate the sandbox.
   $sandbox = &$context['sandbox'];
   if (empty($sandbox)) {
@@ -54,13 +56,12 @@ function islandora_handle_update_handles_batch_operation(array $params, &$contex
         '@pidlist' => $params['pidlist'],
       )));
     }
-    module_load_include('inc', 'islandora_handle', 'includes/handle');
-    module_load_include('inc', 'islandora', 'includes/derivatives');
     $sandbox['current'] = 0;
+    $sandbox['pointer'] = ftell($sandbox['file_handle']);
   }
 
   // Cycle through some lines, do some thangs.
-  fseek($sandbox['file_handle'], $sandbox['current']);
+  fseek($sandbox['file_handle'], $sandbox['pointer']);
   for ($i = 0; $i < $params['chunk_size']; $i++) {
     if (feof($sandbox['file_handle'])) {
       drush_log(t('@lines lines processed', array(
@@ -70,6 +71,7 @@ function islandora_handle_update_handles_batch_operation(array $params, &$contex
       return;
     }
     $pid = trim(fgets($sandbox['file_handle']));
+    $sandbox['pointer'] = ftell($sandbox['file_handle']);
     if (empty($pid)) {
       continue;
     }
