@@ -60,7 +60,7 @@ function islandora_handle_update_handles_batch_operation(array $params, &$contex
   }
 
   // Cycle through some lines, do some thangs.
-  $f_handle = fopen($params['pidlist'], 'rb')
+  $f_handle = fopen($params['pidlist'], 'rb');
   fseek($f_handle, $sandbox['pointer']);
   for ($i = 0; $i < $params['chunk_size']; $i++) {
     if (feof($f_handle)) {
