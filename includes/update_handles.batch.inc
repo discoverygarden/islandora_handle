@@ -94,7 +94,7 @@ function islandora_handle_update_handles_batch_operation(array $params, &$contex
         foreach ($configs as $config) {
           islandora_do_derivatives($object, array(
             'force' => TRUE,
-            'source_dsid' => $config->dsid,
+            'source_dsid' => $config->datastream,
           ));
         }
         $message = t('@pid: Updated handle @handle to point to @target', array(
