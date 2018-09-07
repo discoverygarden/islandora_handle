@@ -132,7 +132,7 @@ function islandora_handle_get_handle_location($handle) {
 function islandora_handle_update_handle_url($handle, $target) {
   if (variable_get('islandora_handle_debug_mode', FALSE)) {
     $response = new stdClass();
-    $response->code = 200;
+    $response->code = 201;
     // Munge out of the suffix out of the Handle.
     $prefix = variable_get('islandora_handle_server_prefix', '1234567');
     $suffix = str_replace("$prefix/", '', $handle);
