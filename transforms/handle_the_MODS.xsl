@@ -12,10 +12,10 @@
     <xsl:template match="/">
         <xsl:apply-templates/>
     </xsl:template>
-    
+
     <xsl:template match="mods:mods">
         <xsl:copy>
-            <xsl:apply-templates/>
+            <xsl:apply-templates select="node()|@*"/>
             <identifier type="hdl">
                 <xsl:value-of select="$handle_value"/>
             </identifier>
