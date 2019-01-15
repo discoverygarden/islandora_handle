@@ -76,10 +76,10 @@ function islandora_handle_islandora_object_alter(AbstractObject $object, array &
     if (count($handle_results > 0)) {
       // Go out and attempt to delete the Handle if there is one
       // supposed to be created.
-      $response = islandora_handle_delete_handle($object->id);
-      if (!in_array($response->code, array('204', '500'))) {
-        $error = $response->error;
-        watchdog('islandora_handle', "Unable to delete Handle. Error: @error", array('@error' => $error), WATCHDOG_ERROR);
+      $handler_class = islandora_handle_retrieve_selected_handler();
+      $handler = new $handler_class();
+      if (!$handler->deleteHandle($object)) {
+        watchdog('islandora_handle', 'Unable to delete Handle.', WATCHDOG_ERROR);
       }
     }
   }
@@ -162,4 +162,25 @@ function islandora_handle_islandora_handle_get_xsl_files() {
     }
   }
   return $transform_options;
+}
+
+/**
+ * Implements hook islandora_handle_handle_handler().
+ */
+function islandora_handle_islandora_handle_handle_handler() {
+  $handlers = array();
+
+  $handlers['islandora_handle_debug'] = array(
+    'label' => t('Debug'),
+    'class' => 'IslandoraHandleDebugHandler',
+  );
+  $handlers['islandora_handle_service'] = array(
+    'label' => t('Handle Service (Handle 7)'),
+    'class' => 'IslandoraHandleServiceHandler',
+  );
+  $handlers['islandora_handle_rest'] = array(
+    'label' => t('Handle REST (Handle 8+)'),
+    'class' => 'IslandoraHandleRestHandler',
+  );
+  return $handlers;
 }

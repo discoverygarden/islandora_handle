@@ -84,11 +84,11 @@ function islandora_handle_update_handles_batch_operation(array $params, &$contex
         WATCHDOG_ERROR);
     }
     else {
-      $suffix = islandora_handle_construct_suffix($object);
-      $target = islandora_handle_construct_target_url($suffix);
-      $handle = variable_get('islandora_handle_server_prefix', '1234567') . "/$suffix";
-      $response = islandora_handle_update_handle_url($handle, $target);
-      if ($response->code == 200) {
+      $handler_class = islandora_handle_retrieve_selected_handler();
+      $handler = new $handler_class($object);
+      $handle = $handler->getFullHandle($object);
+      $target = $handler->constructTargetUrl($handler->constructSuffix($object));
+      if ($handler->updateHandle($object, $target)) {
         // Re-run derivative generation for configured DSID sources.
         $configs = islandora_handle_retrieve_configurations_by_cmodels($object->models);
         foreach ($configs as $config) {
@@ -104,10 +104,9 @@ function islandora_handle_update_handles_batch_operation(array $params, &$contex
         ));
       }
       else {
-        $message = t('@pid: Failed to update handle @handle; error code @code', array(
+        $message = t('@pid: Failed to update handle @handle.', array(
           '@pid' => $pid,
           '@handle' => $handle,
-          '@code' => $response->code,
         ));
       }
       drush_log($message);

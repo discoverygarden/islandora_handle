@@ -17,12 +17,39 @@
  *   The admin form.
  */
 function islandora_handle_server_form(array $form, array &$form_state) {
+  module_load_include('inc', 'islandora_handle', 'includes/handle');
+
   $form = array();
-  $form['server_location'] = array(
+  $handlers = islandora_handle_retrieve_handle_handlers();
+  $options = array();
+
+  foreach ($handlers as $key => $values) {
+    $options[$key] = $values['label'];
+  }
+  $default_handler = variable_get('islandora_handle_handler', 'islandora_handle_service');
+  $form['fieldset'] = array(
+    '#type' => 'fieldset',
+    '#title' => t('Handler'),
+    '#collapsible' => FALSE,
+  );
+  $form['fieldset']['handler'] = array(
+    '#type' => 'radios',
+    '#options' => $options,
+    '#default_value' => $default_handler,
+  );
+
+  $form['fieldset']['server_location'] = array(
     '#type' => 'textfield',
     '#title' => t('Handle Server Service Location'),
     '#description' => t('Location of the Handle.net server'),
     '#default_value' => variable_get('islandora_handle_server_url', 'http://localhost:8080/handle-service'),
+    '#states' => array(
+      'visible' => array(
+        ':input[name="handler"]' => array(
+          'value' => 'islandora_handle_service',
+        ),
+      ),
+    ),
   );
   $form['server_handle_admin_user'] = array(
     '#type' => 'textfield',
@@ -42,19 +69,11 @@ function islandora_handle_server_form(array $form, array &$form_state) {
     '#description' => t('Handle prefix as specified from Handle.net'),
     '#default_value' => variable_get('islandora_handle_server_prefix', '1234567'),
   );
-  // islandora_handle_host initial value is empty and will default resolver to
-  // ingestion host.
   $form['server_handle_host'] = array(
     '#type' => 'textfield',
-    '#title' => t('Hostname ex:http://example.com/'),
-    '#description' => t('URL that should be used'),
+    '#title' => t('Hostname'),
+    '#description' => t('URL that should be used when constructing a target URL. Leaving empty will use the default site name. <br />Example: http://example.com/'),
     '#default_value' => variable_get('islandora_handle_host', ''),
-  );
-  $form['debug_mode'] = array(
-    '#type' => 'checkbox',
-    '#title' => t('Debug Mode'),
-    '#description' => t('Enables debug mode, bypassing the need for an actual handle server.'),
-    '#default_value' => variable_get('islandora_handle_debug_mode', FALSE),
   );
   $form['server_handle_submit'] = array(
     '#type' => 'submit',
@@ -89,6 +108,8 @@ function islandora_handle_server_form_validate(array $form, array &$form_state) 
  *   The Drupal form state.
  */
 function islandora_handle_server_form_submit(array $form, array &$form_state) {
+  $default_handler = $form_state['values']['handler'];
+  variable_set('islandora_handle_handler', $default_handler);
   variable_set('islandora_handle_server_url', $form_state['values']['server_location']);
   variable_set('islandora_handle_server_admin_username', $form_state['values']['server_handle_admin_user']);
   variable_set('islandora_handle_server_admin_password', $form_state['values']['server_handle_admin_password']);
@@ -96,10 +117,8 @@ function islandora_handle_server_form_submit(array $form, array &$form_state) {
 
   variable_set('islandora_handle_host', $form_state['values']['server_handle_host']);
 
-  variable_set('islandora_handle_debug_mode', (bool) $form_state['values']['debug_mode']);
-
   // Only create the debug table if needed.
-  if (!db_table_exists('islandora_handle_debug_handles') && variable_get('islandora_handle_debug_mode', FALSE)) {
+  if (!db_table_exists('islandora_handle_debug_handles') && $default_handler === 'islandora_handle_debug') {
     $table = array(
       'description' => 'Stores handles used during debug mode.',
       'fields' => array(
@@ -108,11 +127,6 @@ function islandora_handle_server_form_submit(array $form, array &$form_state) {
           'type' => 'varchar',
           'length' => 255,
           'not null' => TRUE,
-        ),
-        'handle' => array(
-          'description' => "The full handle, concatenated from the handle server's prefix and the individual handle entry's suffix.",
-          'type' => 'varchar',
-          'length' => 255,
         ),
         'location' => array(
           'description' => "The location where the debug Handle is pointing to.",
@@ -125,7 +139,7 @@ function islandora_handle_server_form_submit(array $form, array &$form_state) {
     db_create_table('islandora_handle_debug_handles', $table);
     db_table_exists('islandora_handle_debug_handles') ? drupal_set_message(t('Successfully created a handle debug table in the database.')) : drupal_set_message(t('An error occurred while attempting to create the handle debug table in the database.'), 'error');
   }
-  elseif (db_table_exists('islandora_handle_debug_handles') && !variable_get('islandora_handle_debug_mode', FALSE)) {
+  elseif (db_table_exists('islandora_handle_debug_handles') && $default_handler !== 'islandora_handle_debug') {
     db_drop_table('islandora_handle_debug_handles');
     if (db_table_exists('islandora_handle_debug_handles')) {
       drupal_set_message(t('An error occurred while attempting to remove the handle debug table from the database.'), 'error');

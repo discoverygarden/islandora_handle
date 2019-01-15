@@ -388,3 +388,24 @@ function islandora_handle_datastream_content_equal(DOMDocument $alpha, DOMDocume
   $clone_bravo->loadXML($bravo->saveXML($bravo->documentElement));
   return $clone_alpha->saveXML() == $clone_bravo->saveXML();
 }
+
+/**
+ * Helper to retrieve all Handle handlers.
+ */
+function islandora_handle_retrieve_handle_handlers() {
+  $handlers = module_invoke_all('islandora_handle_handle_handler');
+  return $handlers;
+}
+
+/**
+ * Helper to get a Handle handler to be used.
+ */
+function islandora_handle_retrieve_selected_handler() {
+  $handler = &drupal_static(__FUNCTION__);
+
+  if (is_null($handler)) {
+    $handlers = islandora_handle_retrieve_handle_handlers();
+    $handler = $handlers[variable_get('islandora_handle_handler', 'islandora_handle_service')]['class'];
+  }
+  return $handler;
+}
