@@ -40,13 +40,18 @@ function islandora_handle_server_form(array $form, array &$form_state) {
 
   $form['fieldset']['server_location'] = array(
     '#type' => 'textfield',
-    '#title' => t('Handle Server Service Location'),
+    '#title' => t('Handle Server Location'),
     '#description' => t('Location of the Handle.net server'),
     '#default_value' => variable_get('islandora_handle_server_url', 'http://localhost:8080/handle-service'),
     '#states' => array(
       'visible' => array(
         ':input[name="handler"]' => array(
-          'value' => 'islandora_handle_service',
+          array(
+            'value' => 'islandora_handle_service',
+          ),
+          array(
+            'value' => 'islandora_handle_rest',
+          ),
         ),
       ),
     ),
@@ -93,9 +98,6 @@ function islandora_handle_server_form(array $form, array &$form_state) {
 function islandora_handle_server_form_validate(array $form, array &$form_state) {
   if (valid_url($form_state['values']['server_location'], TRUE) == FALSE) {
     form_set_error('server_location', t('Must be a valid URL!'));
-  }
-  if (!is_numeric($form_state['values']['server_handle_prefix'])) {
-    form_set_error('server_handle_prefix', t('Handle prefix must be numeric!'));
   }
 }
 

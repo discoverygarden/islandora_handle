@@ -195,74 +195,6 @@ function islandora_handle_delete_handle($suffix) {
 }
 
 /**
- * Adds our Handle value to the specified datastream.
- *
- * @param AbstractObject $object
- *   An AbstractObject representing an object within Fedora.
- * @param string $datastream
- *   The datastream to which we are applying the Handle value to.
- * @param string $xsl_location
- *   The uri location of the XSL we are applying to append the Handle.
- *
- * @return array
- *   An array describing the outcome of the operation.
- */
-function islandora_handle_append_handle(AbstractObject $object, $datastream, $xsl_location) {
-  $xslt = new XSLTProcessor();
-  $xsl_transform = new DOMDocument();
-  $handle_url = islandora_handle_construct_url($object, FALSE);
-
-  $ds_content = $object[$datastream]->content;
-
-  $xsl_transform->load($xsl_location);
-  $input = new DomDocument();
-
-  $did_load_ok = $input->loadXML($ds_content);
-  if ($did_load_ok) {
-    $xslt->importStylesheet($xsl_transform);
-    $xslt->setParameter('', 'handle_value', $handle_url);
-    $ds_output = $xslt->transformToDoc($input);
-    if ($ds_output) {
-      // If there is nothing to change don't make a new version.
-      $xml_content = $ds_output->saveXML();
-      if (!islandora_handle_datastream_content_equal($input, $ds_output)) {
-        $object[$datastream]->content = $xml_content;
-        return array(
-          'success' => TRUE,
-          'message' => array(
-            'message' => t('Appended Handle to @ds datastream for @pid!'),
-            'message_sub' => array('@pid' => $object->id, '@ds' => $datastream),
-            'type' => 'dsm',
-          ),
-        );
-      }
-    }
-    else {
-      return array(
-        'success' => FALSE,
-        'message' => array(
-          'message' => t('Appending the Handle value for @obj on the @ds datastream failed!'),
-          'message_sub' => array('@obj' => $object->id, '@ds' => $datastream),
-          'type' => 'watchdog',
-          'severity' => WATCHDOG_ERROR,
-        ),
-      );
-    }
-  }
-  else {
-    return array(
-      'success' => FALSE,
-      'message' => array(
-        'message' => t('Unable to load content of the @ds datastream for @obj!'),
-        'message_sub' => array('@obj' => $object->id, '@ds' => $datastream),
-        'type' => 'watchdog',
-        'severity' => WATCHDOG_ERROR,
-      ),
-    );
-  }
-}
-
-/**
  * Constructs the Handle server URL.
  *
  * @param AbstractObject $object
@@ -281,7 +213,7 @@ function islandora_handle_construct_url(AbstractObject $object, $service) {
     $url = variable_get('islandora_handle_server_url', 'http://localhost:8080/handle-service');
   }
   else {
-    $url = 'http://hdl.handle.net';
+    $url = 'https://hdl.handle.net';
   }
   return "$url/$prefix/$suffix";
 }

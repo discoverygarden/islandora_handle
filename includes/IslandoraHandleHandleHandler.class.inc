@@ -102,6 +102,21 @@ abstract class IslandoraHandleHandleHandler {
   }
 
   /**
+   * Helper to return the Handle.net URL for the metadata.
+   *
+   * @param AbstractObject $object
+   *   The object having a value appended to its metadata.
+   *
+   * @return string
+   *   The Handle.net URL to be used in the metadata.
+   */
+  public function getHandleMetadataValue(AbstractObject $object) {
+    return format_string('http://hdl.handle.net/!handle', array(
+      '!handle' => $this->getFullHandle($object),
+    ));
+  }
+
+  /**
    * Adds our Handle value to the specified datastream.
    *
    * @param AbstractObject $object
@@ -115,18 +130,15 @@ abstract class IslandoraHandleHandleHandler {
    *   An array describing the outcome of the operation.
    */
   public function appendHandleToMetadata(AbstractObject $object, $datastream, $xsl_location) {
-    if ($this->targetUrl) {
-      $this->constructTargetUrl($object->id);
-    }
     $xslt = new XSLTProcessor();
     $xsl_transform = new DOMDocument();
     $ds_content = $object[$datastream]->content;
     $xsl_transform->load($xsl_location);
-    $input = new DomDocument();
+    $input = new DOMDocument();
     $did_load_ok = $input->loadXML($ds_content);
     if ($did_load_ok) {
       $xslt->importStylesheet($xsl_transform);
-      $xslt->setParameter('', 'handle_value', $this->targetUrl);
+      $xslt->setParameter('', 'handle_value', $this->getHandleMetadataValue($object));
       $ds_output = $xslt->transformToDoc($input);
       if ($ds_output) {
         // If there is nothing to change don't make a new version.

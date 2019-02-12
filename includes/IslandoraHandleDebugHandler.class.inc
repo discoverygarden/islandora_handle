@@ -12,7 +12,7 @@ class IslandoraHandleDebugHandler extends IslandoraHandleHandleHandler {
    *   The AbstractObject having a handle minted for it.
    *
    * @return bool
-   *    TRUE on creation; FALSE otherwise.
+   *   TRUE on creation; FALSE otherwise.
    */
   public function createHandle(AbstractObject $object) {
     $suffix = $this->constructSuffix($object);
