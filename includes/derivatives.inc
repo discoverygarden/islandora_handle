@@ -217,7 +217,7 @@ function islandora_handle_clean_up_handle(AbstractObject $object, $force = FALSE
       $dom_xpath->registerNamespace('dc', 'http://purl.org/dc/elements/1.1/');
 
       $update = FALSE;
-      $handle_url = islandora_handle_construct_url($object, FALSE);
+      $handle_url = $handler->getMetadataValue($object);
       $identifier_results = $dom_xpath->query('/oai_dc:dc/dc:identifier[text() = "' . $handle_url . '"]');
       foreach ($identifier_results as $node) {
         $node->parentNode->removeChild($node);
