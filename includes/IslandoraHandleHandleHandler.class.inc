@@ -92,7 +92,7 @@ abstract class IslandoraHandleHandleHandler {
    *   constructed to compare.
    *
    * @return string
-   *   A full handle URL. Example: http://hdl.net/12345/islandora:1.
+   *   A handle containing the prefix and suffix.
    */
   public function getFullHandle($handle) {
     return $handle instanceof AbstractObject ? format_string('!prefix/!suffix', array(
