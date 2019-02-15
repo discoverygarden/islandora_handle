@@ -2,10 +2,7 @@
 
 ## Introduction
 
-Islandora implementation of the Handle Service API used to interact with a
-Handle Server.
-
-API: https://github.com/cordmata/handle-service
+Provides a means to communicate with Handle.net via a [Handle Service API](https://github.com/cordmata/handle-service) (Handle 7) or Handle's REST API (Handle 8+).
 
 ## Requirements
 

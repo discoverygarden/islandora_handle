@@ -20,11 +20,14 @@
  */
 function islandora_handle_append_handle_from_configuration(AbstractObject $object, $force = FALSE, array $hook = array()) {
   module_load_include('inc', 'islandora_handle', 'includes/handle');
+
   $success = TRUE;
   $messages = array();
-  if (!islandora_handle_query_for_handle($object)) {
-    $response = islandora_handle_construct_handle($object);
-    if ($response->code == 201) {
+  $handler_class = islandora_handle_retrieve_selected_handler();
+  $handler = new $handler_class($object);
+
+  if (!$handler->readHandle($object)) {
+    if ($handler->createHandle($object)) {
       $messages[] = array(
         'message' => t('Created Handle for @pid!'),
         'message_sub' => array('@pid' => $object->id),
@@ -36,8 +39,8 @@ function islandora_handle_append_handle_from_configuration(AbstractObject $objec
         'success' => FALSE,
         'messages' => array(
           array(
-            'message' => t('Error constructing Handle for @obj! Error of: @error.'),
-            'message_sub' => array('@error' => $response->error, '@obj' => $object->id),
+            'message' => t('Error constructing Handle for @obj!.'),
+            'message_sub' => array('@obj' => $object->id),
             'type' => 'watchdog',
             'severity' => WATCHDOG_ERROR,
           ),
@@ -45,22 +48,32 @@ function islandora_handle_append_handle_from_configuration(AbstractObject $objec
       );
     }
   }
-
+  $metadata_updated = FALSE;
   foreach (islandora_handle_retrieve_configurations_by_cmodels($object->models) as $assoc) {
     if ($hook['destination_dsid'] == $assoc->datastream && isset($object[$assoc->datastream])) {
-      $add_outcome = islandora_handle_append_handle($object, $assoc->datastream, $assoc->xsl_location);
-      if (!$add_outcome['success']) {
-        $success = FALSE;
+      $add_outcome = $handler->appendHandleToMetadata($object, $assoc->datastream, $assoc->xsl_location);
+      // XXX: When there's nothing to be done in the appending of metadata (when
+      // the datastream already contains the handle value) don't report any
+      // derivative logging as nothing actually happened.
+      if (isset($add_outcome['success'])) {
+        $metadata_updated = TRUE;
+        if (!$add_outcome['success']) {
+          $success = FALSE;
+        }
+        $messages[] = $add_outcome['message'];
       }
-      $messages[] = $add_outcome['message'];
       break;
     }
   }
-
-  return array(
-    'success' => $success,
-    'messages' => $messages,
-  );
+  // In the event nothing gets updated is no messages/success result to pass on
+  // to the derivative logging.
+  if ($metadata_updated) {
+    return array(
+      'success' => $success,
+      'messages' => $messages,
+    );
+  }
+  return array();
 }
 
 /**
@@ -78,7 +91,9 @@ function islandora_handle_append_handle_from_configuration(AbstractObject $objec
  */
 function islandora_handle_add_to_dc_datastream(AbstractObject $object, $force = FALSE, array $hook = array()) {
   module_load_include('inc', 'islandora_handle', 'includes/handle');
-  $handle_existence = islandora_handle_query_for_handle($object);
+  $handler_class = islandora_handle_retrieve_selected_handler();
+  $handler = new $handler_class();
+  $handle_existence = $handler->readHandle($object);
   $dc_existence = isset($object['DC']);
   if ($dc_existence && $handle_existence) {
     // This could trigger many times so let's be sure that the current Handle
@@ -93,7 +108,7 @@ function islandora_handle_add_to_dc_datastream(AbstractObject $object, $force = 
 
     $update = TRUE;
     $handle_replaced = FALSE;
-    $handle_url = islandora_handle_construct_url($object, FALSE);
+    $handle_url = $handler->getHandleMetadataValue($object);
     $handle_node = $dom->createElementNS('http://purl.org/dc/elements/1.1/', 'dc:identifier', $handle_url);
 
     // First check if one exists such that we can replace it.
@@ -178,7 +193,10 @@ function islandora_handle_clean_up_handle(AbstractObject $object, $force = FALSE
   // Handle present when it's not appended anywhere...
   module_load_include('inc', 'islandora_handle', 'includes/handle');
   $messages = array();
-  if (islandora_handle_query_for_handle($object)) {
+  $handler_class = islandora_handle_retrieve_selected_handler();
+  $handler = new $handler_class($object);
+
+  if ($handler->readHandle($object)) {
     $found = FALSE;
     $associations = islandora_handle_retrieve_configurations_by_cmodels($object->models);
     foreach ($associations as $assoc) {
@@ -199,7 +217,7 @@ function islandora_handle_clean_up_handle(AbstractObject $object, $force = FALSE
       $dom_xpath->registerNamespace('dc', 'http://purl.org/dc/elements/1.1/');
 
       $update = FALSE;
-      $handle_url = islandora_handle_construct_url($object, FALSE);
+      $handle_url = $handler->getMetadataValue($object);
       $identifier_results = $dom_xpath->query('/oai_dc:dc/dc:identifier[text() = "' . $handle_url . '"]');
       foreach ($identifier_results as $node) {
         $node->parentNode->removeChild($node);
@@ -210,12 +228,9 @@ function islandora_handle_clean_up_handle(AbstractObject $object, $force = FALSE
         $object['DC']->content = $dom->saveXML();
       }
 
-      $delete_response = islandora_handle_delete_handle($object->id);
-      if (!in_array($delete_response->code, array('204', '500'))) {
-        $error = $delete_response->error;
+      if (!$handler->deleteHandle($object->id)) {
         $messages[] = array(
-          'message' => t('Unable to delete Handle. Error: @error'),
-          'message_sub' => array('@error' => $error),
+          'message' => t('Unable to delete Handle.'),
           'type' => 'watchdog',
           'severity' => WATCHDOG_ERROR,
         );

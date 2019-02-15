@@ -17,3 +17,18 @@ function hook_islandora_handle_get_xsl_files() {
     'path/to/some/file' => 'file',
   );
 }
+
+/**
+ * Define a Handle minting implementation.
+ *
+ * @note: Expectation is whatever class is being defined as auto-loaded by the
+ * implementing module.
+ */
+function hook_islandora_handle_handle_handler() {
+  return array(
+    'my_cool_handler' => array(
+      'label' => t('My Cool Handle Handler That Handles Handles'),
+      'class' => 'MyCoolClassNameToBeConstructed',
+    ),
+  );
+}
