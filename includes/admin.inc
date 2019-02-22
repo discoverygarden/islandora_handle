@@ -65,7 +65,7 @@ function islandora_handle_server_form(array $form, array &$form_state) {
   $form['server_handle_admin_password'] = array(
     '#type' => 'password',
     '#title' => t('Password'),
-    '#description' => t('The username of the Handle administrator'),
+    '#description' => t('The password of the Handle administrator'),
     '#default_value' => variable_get('islandora_handle_server_admin_password', 'superSecretPassword'),
   );
   $form['server_handle_prefix'] = array(
