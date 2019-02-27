@@ -79,7 +79,9 @@ function islandora_handle_islandora_object_alter(AbstractObject $object, array &
       $handler_class = islandora_handle_retrieve_selected_handler();
       $handler = new $handler_class();
       if (!$handler->deleteHandle($object)) {
-        watchdog('islandora_handle', 'Unable to delete Handle.', WATCHDOG_ERROR);
+        watchdog('islandora_handle', 'Unable to delete Handle when @pid was purged.', array(
+          '@pid' => $object->id,
+        ), WATCHDOG_ERROR);
       }
     }
   }
