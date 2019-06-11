@@ -73,7 +73,7 @@ function islandora_handle_islandora_object_alter(AbstractObject $object, array &
       ->execute()
       ->fetchAll();
 
-    if (count($handle_results > 0)) {
+    if ($handle_results) {
       // Go out and attempt to delete the Handle if there is one
       // supposed to be created.
       $handler_class = islandora_handle_retrieve_selected_handler();
