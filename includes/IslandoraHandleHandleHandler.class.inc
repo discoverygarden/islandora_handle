@@ -70,15 +70,18 @@ abstract class IslandoraHandleHandleHandler {
       if (empty($hostvar)) {
         // We do this with language such that we don't get language specific
         // prefixes in the URL.
-        return url("islandora/object/$suffix", array(
+        $this->targetUrl = url("islandora/object/$suffix", array(
           'language' => (object) array('language' => FALSE),
           'absolute' => TRUE,
         ));
       }
-      $this->targetUrl = format_string('!hostislandora/object/!suffix', array(
-        '!host' => $hostvar,
-        '!suffix' => $suffix,
-      ));
+      else {
+        $path = url("islandora/object/$suffix", array(
+          'language' => (object) array('language' => FALSE),
+          'absolute' => FALSE,
+        ));
+        $this->targetUrl = rtrim($hostvar, '/') . '/' . ltrim($path, '/');
+      }
     }
     return $this->targetUrl;
   }
