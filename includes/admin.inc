@@ -124,8 +124,8 @@ function islandora_handle_server_form_submit(array $form, array &$form_state) {
     $table = array(
       'description' => 'Stores handles used during debug mode.',
       'fields' => array(
-        'suffix' => array(
-          'description' => 'The suffix of the handle.',
+        'handle' => array(
+          'description' => 'The handle.',
           'type' => 'varchar',
           'length' => 255,
           'not null' => TRUE,
@@ -136,7 +136,7 @@ function islandora_handle_server_form_submit(array $form, array &$form_state) {
           'length' => 255,
         ),
       ),
-      'primary key' => array('suffix'),
+      'primary key' => array('handle'),
     );
     db_create_table('islandora_handle_debug_handles', $table);
     db_table_exists('islandora_handle_debug_handles') ? drupal_set_message(t('Successfully created a handle debug table in the database.')) : drupal_set_message(t('An error occurred while attempting to create the handle debug table in the database.'), 'error');

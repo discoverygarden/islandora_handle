@@ -22,7 +22,7 @@ abstract class IslandoraHandleHandleHandler {
    */
   public function __construct(AbstractObject $object = NULL, $prefix = NULL) {
     if ($object instanceof AbstractObject) {
-      $this->targetUrl = $this->constructTargetUrl($object->id);
+      $this->targetUrl = $this->constructTargetUrl($object);
       $this->pid = $object->id;
     }
     if (is_null($prefix)) {
@@ -52,17 +52,17 @@ abstract class IslandoraHandleHandleHandler {
   /**
    * Helper to construct a target URL.
    *
-   * Constructed from islandora/object, appended with the given $suffix and
+   * Constructed from islandora/object, appended with the given $object->id and
    * prepended with either the local server's URL or the custom configured
    * variable islandora_handle_host.
    *
-   * @param string $suffix
-   *   Suffix to append to the URL.
+   * @param AbstractObject $object
+   *   The object that is the target of the URL.
    *
    * @return string
    *   The constructed target URL.
    */
-  public function constructTargetUrl($suffix) {
+  public function constructTargetUrl(AbstractObject $object) {
     if (!$this->targetUrl) {
       // $hostvar will be populated if host resolver is different than ingestion
       // service.
@@ -70,14 +70,14 @@ abstract class IslandoraHandleHandleHandler {
       if (empty($hostvar)) {
         // We do this with language such that we don't get language specific
         // prefixes in the URL.
-        return url("islandora/object/$suffix", array(
+        return url("islandora/object/" . $object->id, array(
           'language' => (object) array('language' => FALSE),
           'absolute' => TRUE,
         ));
       }
       $this->targetUrl = format_string('!hostislandora/object/!suffix', array(
         '!host' => $hostvar,
-        '!suffix' => $suffix,
+        '!suffix' => $object->id,
       ));
     }
     return $this->targetUrl;

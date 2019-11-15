@@ -6,23 +6,6 @@
 class IslandoraHandleDebugHandler extends IslandoraHandleHandleHandler {
 
   /**
-   * Get the suffix from an existing handle or object.
-   *
-   * @param string|AbstractObject $handle
-   *   A Handle that we are updating in prefix/suffix form or an AbstractObject
-   *   that is being updated. In the AbstractObject case a Handle URL will be
-   *   constructed.
-   *
-   * @return string
-   *   The suffix of an existing handle.
-   */
-  private function getSuffix($handle) {
-    $full_handle = $this->getFullHandle($handle);
-    $prefix = variable_get('islandora_handle_server_prefix', '1234567');
-    return str_replace("$prefix/", '', $full_handle);
-  }
-
-  /**
    * Creates a Handle in the database for debugging.
    *
    * @param AbstractObject $object
@@ -32,11 +15,10 @@ class IslandoraHandleDebugHandler extends IslandoraHandleHandleHandler {
    *   TRUE on creation; FALSE otherwise.
    */
   public function createHandle(AbstractObject $object) {
-    $suffix = $this->constructSuffix($object);
     db_insert('islandora_handle_debug_handles')
       ->fields(array(
-        'suffix' => $suffix,
-        'location' => $this->constructTargetUrl($suffix),
+        'handle' => $this->getFullHandle($object),
+        'location' => $this->constructTargetUrl($object),
       ))
       ->execute();
     return TRUE;
@@ -54,11 +36,10 @@ class IslandoraHandleDebugHandler extends IslandoraHandleHandleHandler {
    *   The location of the Handle if it exists; FALSE otherwise.
    */
   public function readHandle($handle) {
-    $suffix = $this->getSuffix($handle);
-    // Need to munge just the suffix out for debug case.
+    $full_handle = $this->getFullHandle($handle);
     return db_select('islandora_handle_debug_handles', 'd')
       ->fields('d', array('location'))
-      ->condition('suffix', $suffix, '=')
+      ->condition('handle', $full_handle, '=')
       ->execute()
       ->fetchField();
   }
@@ -77,13 +58,13 @@ class IslandoraHandleDebugHandler extends IslandoraHandleHandleHandler {
    *   TRUE if successful; FALSE otherwise.
    */
   public function updateHandle($handle, $target) {
-    $suffix = $this->getSuffix($handle);
+    $full_handle = $this->getFullHandle($handle);
     db_merge('islandora_handle_debug_handles')
       ->fields(array(
         'location' => $target,
-        'suffix' => $suffix,
+        'handle' => $full_handle,
       ))
-      ->condition('suffix', $suffix)
+      ->condition('handle', $full_handle)
       ->execute();
     return TRUE;
   }
@@ -100,9 +81,9 @@ class IslandoraHandleDebugHandler extends IslandoraHandleHandleHandler {
    *   TRUE if successful; FALSE otherwise.
    */
   public function deleteHandle($handle) {
-    $suffix = $this->getSuffix($handle);
+    $full_handle = $this->getFullHandle($handle);
     db_delete('islandora_handle_debug_handles')
-      ->condition('suffix', $suffix)
+      ->condition('handle', $full_handle)
       ->execute();
     return TRUE;
   }

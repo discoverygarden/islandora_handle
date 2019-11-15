@@ -87,7 +87,7 @@ function islandora_handle_update_handles_batch_operation(array $params, &$contex
       $handler_class = islandora_handle_retrieve_selected_handler();
       $handler = new $handler_class($object);
       $handle = $handler->getFullHandle($object);
-      $target = $handler->constructTargetUrl($handler->constructSuffix($object));
+      $target = $handler->constructTargetUrl($object);
       if ($handler->updateHandle($object, $target)) {
         // Re-run derivative generation for configured DSID sources.
         $configs = islandora_handle_retrieve_configurations_by_cmodels($object->models);
