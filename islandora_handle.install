@@ -102,7 +102,7 @@ function islandora_handle_update_7002() {
     // And last update the handle to be prefix + suffix
     $prefix = variable_get('islandora_handle_server_prefix', '1234567') . '/';
     db_update('islandora_handle_debug_handles')
-      ->expression('handle', ':prefix + handle', array(':prefix' => $prefix))
+      ->expression('handle', 'concat(:prefix, handle)', array(':prefix' => $prefix))
       ->execute();
   }
 }
