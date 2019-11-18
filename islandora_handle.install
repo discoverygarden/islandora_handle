@@ -84,10 +84,10 @@ function islandora_handle_update_7001(&$sandbox) {
  */
 function islandora_handle_update_7002() {
   if (db_table_exists('islandora_handle_debug_handles') && !db_field_exists('islandora_handle_debug_handles', 'handle')) {
-    // First drop the primary key
+    // First drop the primary key.
     db_drop_primary_key('islandora_handle_debug_handles');
 
-    // Then change the field suffix to the field handle
+    // Then change the field suffix to the field handle.
     $spec = array(
       'description' => 'The handle.',
       'type' => 'varchar',
@@ -99,7 +99,7 @@ function islandora_handle_update_7002() {
     );
     db_change_field('islandora_handle_debug_handles', 'suffix', 'handle', $spec);
 
-    // And last update the handle to be prefix + suffix
+    // And last update the handle to be prefix + suffix.
     $prefix = variable_get('islandora_handle_server_prefix', '1234567') . '/';
     db_update('islandora_handle_debug_handles')
       ->expression('handle', 'concat(:prefix, handle)', array(':prefix' => $prefix))
