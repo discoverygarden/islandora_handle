@@ -67,18 +67,21 @@ abstract class IslandoraHandleHandleHandler {
       // $hostvar will be populated if host resolver is different than ingestion
       // service.
       $hostvar = variable_get('islandora_handle_host', '');
-      if (empty($hostvar)) {
-        // We do this with language such that we don't get language specific
-        // prefixes in the URL.
-        return url("islandora/object/$suffix", array(
-          'language' => (object) array('language' => FALSE),
-          'absolute' => TRUE,
-        ));
-      }
-      $this->targetUrl = format_string('!hostislandora/object/!suffix', array(
-        '!host' => $hostvar,
-        '!suffix' => $suffix,
+      // We call the function url with language such that we don't get language
+      // specific prefixes in the URL.
+      // Also, if alias = TRUE it means that the path is used as-is, no alias
+      // for the path is used.
+      $target_url = url("islandora/object/$suffix", array(
+        'language' => (object) array('language' => FALSE),
+        'absolute' => empty($hostvar),
+        'alias'    => !variable_get('islandora_handle_use_alias', FALSE),
       ));
+      if (empty($hostvar)) {
+        $this->targetUrl = $target_url;
+      }
+      else {
+        $this->targetUrl = rtrim($hostvar, '/') . '/' . ltrim($target_url, '/');
+      }
     }
     return $this->targetUrl;
   }
