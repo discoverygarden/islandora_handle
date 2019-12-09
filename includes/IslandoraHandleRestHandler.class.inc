@@ -43,7 +43,7 @@ class IslandoraHandleRestHandler extends IslandoraHandleHandleHandler {
         array(
           'index' => 1,
           'type' => 'URL',
-          'data' => $this->constructTargetUrl($this->constructSuffix($object)),
+          'data' => $this->constructTargetUrl($object),
         ),
       )),
       'method' => 'PUT',

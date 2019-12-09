@@ -79,3 +79,31 @@ function islandora_handle_update_7001(&$sandbox) {
     ->condition('datastream', 'DC')
     ->execute();
 }
+
+/**
+ * Update the debug table if needed.
+ */
+function islandora_handle_update_7002() {
+  if (db_table_exists('islandora_handle_debug_handles') && !db_field_exists('islandora_handle_debug_handles', 'handle')) {
+    // First drop the primary key.
+    db_drop_primary_key('islandora_handle_debug_handles');
+
+    // Then change the field suffix to the field handle.
+    $spec = array(
+      'description' => 'The handle.',
+      'type' => 'varchar',
+      'length' => 255,
+      'not null' => TRUE,
+    );
+    $keys_new = array(
+      'primary key' => array('handle'),
+    );
+    db_change_field('islandora_handle_debug_handles', 'suffix', 'handle', $spec, $keys_new);
+
+    // And last update the handle to be prefix + suffix.
+    $prefix = variable_get('islandora_handle_server_prefix', '1234567') . '/';
+    db_update('islandora_handle_debug_handles')
+      ->expression('handle', 'concat(:prefix, handle)', array(':prefix' => $prefix))
+      ->execute();
+  }
+}

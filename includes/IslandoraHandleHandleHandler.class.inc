@@ -22,7 +22,7 @@ abstract class IslandoraHandleHandleHandler {
    */
   public function __construct(AbstractObject $object = NULL, $prefix = NULL) {
     if ($object instanceof AbstractObject) {
-      $this->targetUrl = $this->constructTargetUrl($object->id);
+      $this->targetUrl = $this->constructTargetUrl($object);
       $this->pid = $object->id;
     }
     if (is_null($prefix)) {
@@ -52,17 +52,18 @@ abstract class IslandoraHandleHandleHandler {
   /**
    * Helper to construct a target URL.
    *
-   * Constructed from islandora/object, appended with the given $suffix and
+   * Constructed from islandora/object, appended with the $pid of an object and
    * prepended with either the local server's URL or the custom configured
    * variable islandora_handle_host.
    *
-   * @param string $suffix
-   *   Suffix to append to the URL.
+   * @param string|AbstractObject $object
+   *   The pid of the object or object itself that is the target of the URL.
    *
    * @return string
    *   The constructed target URL.
    */
-  public function constructTargetUrl($suffix) {
+  public function constructTargetUrl($object) {
+    $pid = $handle instanceof AbstractObject ? $object->id : $object;
     if (!$this->targetUrl) {
       // $hostvar will be populated if host resolver is different than ingestion
       // service.
@@ -71,7 +72,7 @@ abstract class IslandoraHandleHandleHandler {
       // specific prefixes in the URL.
       // Also, if alias = TRUE it means that the path is used as-is, no alias
       // for the path is used.
-      $target_url = url("islandora/object/$suffix", array(
+      $target_url = url("islandora/object/$pid", array(
         'language' => (object) array('language' => FALSE),
         'absolute' => empty($hostvar),
         'alias'    => !variable_get('islandora_handle_use_alias', FALSE),
