@@ -98,7 +98,7 @@ function islandora_handle_update_7002() {
     $keys_new = array(
       'primary key' => array('handle'),
     );
-    db_change_field('islandora_handle_debug_handles', 'suffix', 'handle', $spec);
+    db_change_field('islandora_handle_debug_handles', 'suffix', 'handle', $spec, $keys_new);
 
     // And last update the handle to be prefix + suffix.
     $prefix = variable_get('islandora_handle_server_prefix', '1234567') . '/';
