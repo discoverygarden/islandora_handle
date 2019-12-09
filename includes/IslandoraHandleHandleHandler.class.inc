@@ -52,17 +52,18 @@ abstract class IslandoraHandleHandleHandler {
   /**
    * Helper to construct a target URL.
    *
-   * Constructed from islandora/object, appended with the given $object->id and
+   * Constructed from islandora/object, appended with the $pid of an object and
    * prepended with either the local server's URL or the custom configured
    * variable islandora_handle_host.
    *
-   * @param AbstractObject $object
-   *   The object that is the target of the URL.
+   * @param string|AbstractObject $object
+   *   The pid of the object or object itself that is the target of the URL.
    *
    * @return string
    *   The constructed target URL.
    */
-  public function constructTargetUrl(AbstractObject $object) {
+  public function constructTargetUrl($object) {
+    $pid = $handle instanceof AbstractObject ? $object->id : $object;
     if (!$this->targetUrl) {
       // $hostvar will be populated if host resolver is different than ingestion
       // service.
@@ -71,7 +72,7 @@ abstract class IslandoraHandleHandleHandler {
       // specific prefixes in the URL.
       // Also, if alias = TRUE it means that the path is used as-is, no alias
       // for the path is used.
-      $target_url = url("islandora/object/" . $object->id, array(
+      $target_url = url("islandora/object/$pid", array(
         'language' => (object) array('language' => FALSE),
         'absolute' => empty($hostvar),
         'alias'    => !variable_get('islandora_handle_use_alias', FALSE),
