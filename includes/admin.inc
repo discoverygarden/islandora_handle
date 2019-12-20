@@ -66,7 +66,14 @@ function islandora_handle_server_form(array $form, array &$form_state) {
     '#type' => 'password',
     '#title' => t('Password'),
     '#description' => t('The password of the Handle administrator'),
-    '#default_value' => variable_get('islandora_handle_server_admin_password', 'superSecretPassword'),
+  );
+  $form['blank_password'] = array(
+    '#type' => 'checkbox',
+    '#title' => t('Make password blank? Current password will be preserved if unchecked.'),
+    '#states' => array(
+      'visible' => array('input[name=server_handle_admin_password]' => array('value' => '')),
+    ),
+    '#default_value' => FALSE,
   );
   $form['server_handle_prefix'] = array(
     '#type' => 'textfield',
@@ -120,7 +127,9 @@ function islandora_handle_server_form_submit(array $form, array &$form_state) {
   variable_set('islandora_handle_handler', $default_handler);
   variable_set('islandora_handle_server_url', $form_state['values']['server_location']);
   variable_set('islandora_handle_server_admin_username', $form_state['values']['server_handle_admin_user']);
-  variable_set('islandora_handle_server_admin_password', $form_state['values']['server_handle_admin_password']);
+  if ($form_state['values']['server_handle_admin_password'] || $form_state['values']['blank_password']) {
+    variable_set('islandora_handle_server_admin_password', $form_state['values']['server_handle_admin_password']);
+  }
   variable_set('islandora_handle_server_prefix', $form_state['values']['server_handle_prefix']);
 
   variable_set('islandora_handle_host', $form_state['values']['server_handle_host']);
