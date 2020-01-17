@@ -62,7 +62,7 @@ class IslandoraHandleServiceHandler extends IslandoraHandleHandleHandler {
       watchdog('islandora_handle', 'Unable to retrieve Handle location for @handle. Error: @error.', array(
         '@handle' => $full_handle,
         '@error' => $response->error,
-      ), WATCHDOG_ERROR);
+      ), WATCHDOG_DEBUG);
       return FALSE;
     }
 
