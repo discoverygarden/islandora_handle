@@ -47,31 +47,33 @@ function islandora_handle_append_handle_from_configuration(AbstractObject $objec
         ),
       );
     }
-  }
-  $metadata_updated = FALSE;
-  foreach (islandora_handle_retrieve_configurations_by_cmodels($object->models) as $assoc) {
-    if ($hook['destination_dsid'] == $assoc->datastream && isset($object[$assoc->datastream])) {
-      $add_outcome = $handler->appendHandleToMetadata($object, $assoc->datastream, $assoc->xsl_location);
-      // XXX: When there's nothing to be done in the appending of metadata (when
-      // the datastream already contains the handle value) don't report any
-      // derivative logging as nothing actually happened.
-      if (isset($add_outcome['success'])) {
-        $metadata_updated = TRUE;
-        if (!$add_outcome['success']) {
-          $success = FALSE;
+
+    $metadata_updated = FALSE;
+    foreach (islandora_handle_retrieve_configurations_by_cmodels($object->models) as $assoc) {
+      if ($hook['destination_dsid'] == $assoc->datastream && isset($object[$assoc->datastream])) {
+        $add_outcome = $handler->appendHandleToMetadata($object, $assoc->datastream, $assoc->xsl_location);
+        // XXX: When there's nothing to be done in the appending of metadata
+        // (when the datastream already contains the handle value) don't report
+        // any derivative logging as nothing actually happened.
+        if (isset($add_outcome['success'])) {
+          $metadata_updated = TRUE;
+          if (!$add_outcome['success']) {
+            $success = FALSE;
+          }
+          $messages[] = $add_outcome['message'];
         }
-        $messages[] = $add_outcome['message'];
+        break;
       }
-      break;
     }
-  }
-  // In the event nothing gets updated is no messages/success result to pass on
-  // to the derivative logging.
-  if ($metadata_updated) {
-    return array(
-      'success' => $success,
-      'messages' => $messages,
-    );
+
+    // In the event nothing gets updated is no messages/success result to pass
+    // on to the derivative logging.
+    if ($metadata_updated) {
+      return array(
+        'success' => $success,
+        'messages' => $messages,
+      );
+    }
   }
   return array();
 }
