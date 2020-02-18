@@ -63,7 +63,7 @@ abstract class IslandoraHandleHandleHandler {
    *   The constructed target URL.
    */
   public function constructTargetUrl($object) {
-    $pid = $handle instanceof AbstractObject ? $object->id : $object;
+    $pid = $object instanceof AbstractObject ? $object->id : $object;
     if (!$this->targetUrl) {
       // $hostvar will be populated if host resolver is different than ingestion
       // service.
