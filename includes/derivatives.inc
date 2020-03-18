@@ -25,27 +25,57 @@ function islandora_handle_append_handle_from_configuration(AbstractObject $objec
   $messages = array();
   $handler_class = islandora_handle_retrieve_selected_handler();
   $handler = new $handler_class($object);
+  $handle_updated = FALSE;
 
-  if (!$handler->readHandle($object)) {
-    if ($handler->createHandle($object)) {
-      $messages[] = array(
-        'message' => t('Created Handle for @pid!'),
-        'message_sub' => array('@pid' => $object->id),
-        'type' => 'dsm',
-      );
+  $target = $handler->readHandle($object);
+  if (!$target || $force) {
+    if (!$target) {
+      if ($handler->createHandle($object)) {
+        $messages[] = array(
+          'message' => t('Created Handle for @pid!'),
+          'message_sub' => array('@pid' => $object->id),
+          'type' => 'dsm',
+        );
+      }
+      else {
+        return array(
+          'success' => FALSE,
+          'messages' => array(
+            array(
+              'message' => t('Error constructing Handle for @obj!.'),
+              'message_sub' => array('@obj' => $object->id),
+              'type' => 'watchdog',
+              'severity' => WATCHDOG_ERROR,
+            ),
+          ),
+        );
+      }
     }
     else {
-      return array(
-        'success' => FALSE,
-        'messages' => array(
-          array(
-            'message' => t('Error constructing Handle for @obj!.'),
-            'message_sub' => array('@obj' => $object->id),
-            'type' => 'watchdog',
-            'severity' => WATCHDOG_ERROR,
-          ),
-        ),
-      );
+      $newtarget = $handler->constructTargetUrl($object);
+      if ($target !== $newtarget) {
+        if ($handler->updateHandle($object, $newtarget)) {
+          $handle_updated = TRUE;
+          $messages[] = array(
+            'message' => t('Update Handle for @pid!'),
+            'message_sub' => array('@pid' => $object->id),
+            'type' => 'dsm',
+          );
+        }
+        else {
+          return array(
+            'success' => FALSE,
+            'messages' => array(
+              array(
+                'message' => t('Error updating Handle for @obj!.'),
+                'message_sub' => array('@obj' => $object->id),
+                'type' => 'watchdog',
+                'severity' => WATCHDOG_ERROR,
+              ),
+            ),
+          );
+        }
+      }
     }
 
     $metadata_updated = FALSE;
@@ -68,7 +98,7 @@ function islandora_handle_append_handle_from_configuration(AbstractObject $objec
 
     // In the event nothing gets updated is no messages/success result to pass
     // on to the derivative logging.
-    if ($metadata_updated) {
+    if ($metadata_updated || $handle_updated) {
       return array(
         'success' => $success,
         'messages' => $messages,
