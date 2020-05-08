@@ -186,3 +186,35 @@ function islandora_handle_islandora_handle_handle_handler() {
   );
   return $handlers;
 }
+
+/**
+ * Implements hook_token_info()
+ */
+function islandora_handle_token_info() {
+  $info['tokens']['fedora']['handle'] = array(
+    'name' => t('Handle'),
+    'description' => t('Fedora object handle'),
+  );
+  return $info;
+}
+
+/**
+ * Implements hook_tokens()
+ */
+function islandora_handle_tokens($type, $tokens, array $data = array(), array $options = array()) {
+  if ($type == 'fedora' & !empty($data['fedora'])) {
+    $object = $data['fedora'];
+    $replacements = array();
+    foreach ($tokens as $name => $original) {
+      if ($name === 'handle') {
+        module_load_include('inc', 'islandora_handle', 'includes/handle');
+        $handler_class = islandora_handle_retrieve_selected_handler();
+        $handler = new $handler_class();
+        $handle = $handler->getFullHandle($object);
+        $replacements[$original] = $handle;
+      }
+    }
+    return $replacements;
+  }
+  return array();
+}
