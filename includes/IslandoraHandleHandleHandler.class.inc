@@ -115,7 +115,8 @@ abstract class IslandoraHandleHandleHandler {
    *   The Handle.net URL to be used in the metadata.
    */
   public function getHandleMetadataValue(AbstractObject $object) {
-    return format_string('http://hdl.handle.net/!handle', array(
+    return format_string('!protocol://hdl.handle.net/!handle', array(
+      '!protocol' => (variable_get('islandora_handle_use_https', FALSE) ? 'https' : 'http'),
       '!handle' => $this->getFullHandle($object),
     ));
   }
