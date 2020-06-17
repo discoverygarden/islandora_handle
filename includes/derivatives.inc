@@ -144,7 +144,9 @@ function islandora_handle_add_to_dc_datastream(AbstractObject $object, $force = 
     $handle_node = $dom->createElementNS('http://purl.org/dc/elements/1.1/', 'dc:identifier', $handle_url);
 
     // First check if one exists such that we can replace it.
-    $identifier_results = $dom_xpath->query('/oai_dc:dc/dc:identifier[starts-with(text(), "http://hdl.handle.net")]');
+    $protocol = variable_get('islandora_handle_use_https', FALSE) ? 'https' : 'http';
+    $query = "/oai_dc:dc/dc:identifier[starts-with(text(), \"{$protocol}://hdl.handle.net\")]";
+    $identifier_results = $dom_xpath->query($query);
     foreach ($identifier_results as $node) {
       // This could trigger many times so let's be sure that the current Handle
       // value doesn't already exist to not create multiple versions.

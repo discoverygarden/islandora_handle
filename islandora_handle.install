@@ -32,6 +32,7 @@ function islandora_handle_uninstall() {
     'islandora_handle_server_url',
     'islandora_handle_handler',
     'islandora_handle_use_alias',
+    'islandora_handle_use_https',
   );
   array_walk($variables, 'variable_del');
 
